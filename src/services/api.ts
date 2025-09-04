@@ -31,9 +31,18 @@ const doctoresApi = {
   create: async (doctorData: CreateDoctorForm): Promise<Doctor> => {
     // Convertir los horarios de inicio y fin a array de horarios
     const horario = generateHorarioArray(doctorData.horarioInicio, doctorData.horarioFin);
+    
+    // Crear disponibilidades para las fechas seleccionadas
+    const disponibilidades = doctorData.fechasDisponibles ? 
+      doctorData.fechasDisponibles.map(fecha => ({
+        fecha,
+        horariosDisponibles: [...horario]
+      })) : [];
+    
     const data = {
       ...doctorData,
       horario,
+      disponibilidades,
       type: 'doctor',
       activo: true
     };

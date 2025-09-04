@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { apiService } from '../services/api';
 import { Doctor } from '../types';
+import CalendarPicker from '../components/CalendarPicker';
 
 const DoctoresPage: React.FC = () => {
   const [doctores, setDoctores] = useState<Doctor[]>([]);
@@ -16,7 +17,8 @@ const DoctoresPage: React.FC = () => {
     telefono: '',
     email: '',
     horarioInicio: '08:00',
-    horarioFin: '17:00'
+    horarioFin: '17:00',
+    fechasDisponibles: [] as string[]
   });
 
   useEffect(() => {
@@ -68,7 +70,8 @@ const DoctoresPage: React.FC = () => {
       telefono: doctor.telefono,
       email: doctor.email,
       horarioInicio: doctor.horarioInicio,
-      horarioFin: doctor.horarioFin
+      horarioFin: doctor.horarioFin,
+      fechasDisponibles: [] // TODO: cargar fechas existentes del doctor
     });
     setShowForm(true);
   };
@@ -80,7 +83,8 @@ const DoctoresPage: React.FC = () => {
       telefono: '',
       email: '',
       horarioInicio: '08:00',
-      horarioFin: '17:00'
+      horarioFin: '17:00',
+      fechasDisponibles: []
     });
     setEditingDoctor(null);
     setShowForm(false);
@@ -189,6 +193,20 @@ const DoctoresPage: React.FC = () => {
                   required
                 />
               </div>
+            </div>
+
+            {/* Calendario de disponibilidad */}
+            <div className="space-y-2">
+              <label className="form-label">Fechas de Disponibilidad</label>
+              <p className="text-sm text-neutral-600 mb-3">
+                📅 Seleccione las fechas en las que el doctor estará disponible para atender pacientes.
+              </p>
+              <CalendarPicker
+                selectedDates={formData.fechasDisponibles}
+                onDatesChange={(dates) => setFormData({ ...formData, fechasDisponibles: dates })}
+                minDate={new Date()}
+                maxDays={60}
+              />
             </div>
 
             <div className="flex space-x-4">

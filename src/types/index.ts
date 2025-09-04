@@ -63,6 +63,7 @@ export interface CreateDoctorForm {
   email: string;
   horarioInicio: string;
   horarioFin: string;
+  fechasDisponibles?: string[];
 }
 
 export interface CreateServicioForm {
