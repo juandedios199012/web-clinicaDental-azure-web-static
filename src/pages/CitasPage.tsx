@@ -71,7 +71,7 @@ const CitasPage: React.FC = () => {
           <p className="text-neutral-600 mt-2">Gestión de citas médicas</p>
         </div>
         <button 
-          onClick={() => navigate('/agendar-cita')}
+          onClick={() => navigate('/agendar')}
           className="btn-primary flex items-center"
         >
           <Plus className="h-5 w-5 mr-2" />
