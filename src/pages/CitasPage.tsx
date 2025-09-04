@@ -22,6 +22,8 @@ const CitasPage: React.FC = () => {
         filters.fecha = dateFilter;
       }
       const data = await apiService.getCitas(filters);
+      console.log('🔍 Citas cargadas:', data);
+      console.log('📋 Primera cita (ejemplo):', data[0]);
       setCitas(data);
     } catch (error) {
       console.error('Error loading appointments:', error);
@@ -108,10 +110,10 @@ const CitasPage: React.FC = () => {
       <div className="space-y-4">
         {filteredCitas.map((cita) => (
           <div key={cita.id} className="card hover:shadow-md transition-shadow">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between">
               <div className="flex-1">
                 <div className="flex items-start justify-between mb-3">
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-lg font-semibold text-neutral-900 flex items-center">
                       <User className="h-5 w-5 mr-2 text-primary-600" />
                       {cita.pacienteNombre}
@@ -123,21 +125,25 @@ const CitasPage: React.FC = () => {
                       </div>
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 mr-2 text-medical-teal" />
-                        <span>{new Date(cita.fecha).toLocaleDateString('es-PE')} a las {formatTime(cita.hora)}</span>
+                        <span>{new Date(cita.fecha + 'T00:00:00').toLocaleDateString('es-PE')} a las {formatTime(cita.hora)}</span>
                       </div>
                     </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(cita.estado)}`}>
-                    {cita.estado}
-                  </span>
+                  <div className="flex flex-col items-end space-y-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(cita.estado)} capitalize`}>
+                      {cita.estado}
+                    </span>
+                  </div>
                 </div>
                 
-                <div className="bg-neutral-50 rounded-lg p-3">
-                  <p className="text-sm font-medium text-neutral-700">Servicio:</p>
-                  <p className="text-sm text-neutral-600">{cita.servicioNombre}</p>
+                <div className="bg-neutral-50 rounded-lg p-3 mt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium text-neutral-700">Servicio:</p>
+                  </div>
+                  <p className="text-sm text-neutral-900 font-medium">{cita.servicioNombre || 'No especificado'}</p>
                   {cita.notas && (
                     <>
-                      <p className="text-sm font-medium text-neutral-700 mt-2">Notas:</p>
+                      <p className="text-sm font-medium text-neutral-700 mt-3">Notas:</p>
                       <p className="text-sm text-neutral-600">{cita.notas}</p>
                     </>
                   )}
@@ -162,7 +168,7 @@ const CitasPage: React.FC = () => {
           <Calendar className="h-16 w-16 text-neutral-300 mx-auto mb-4" />
           <p className="text-neutral-500 text-lg">No se encontraron citas</p>
           <p className="text-neutral-400 text-sm mt-1">
-            {dateFilter ? `para la fecha ${new Date(dateFilter).toLocaleDateString('es-PE')}` : ''}
+            {dateFilter ? `para la fecha ${new Date(dateFilter + 'T00:00:00').toLocaleDateString('es-PE')}` : ''}
           </p>
         </div>
       )}
