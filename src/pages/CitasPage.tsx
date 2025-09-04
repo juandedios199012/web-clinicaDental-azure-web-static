@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Calendar, User, Stethoscope } from 'lucide-react';
 import { apiService } from '../services/api';
 import { Cita } from '../types';
 
 const CitasPage: React.FC = () => {
+  const navigate = useNavigate();
   const [citas, setCitas] = useState<Cita[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,7 +70,10 @@ const CitasPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-neutral-900">Citas</h1>
           <p className="text-neutral-600 mt-2">Gestión de citas médicas</p>
         </div>
-        <button className="btn-primary flex items-center">
+        <button 
+          onClick={() => navigate('/agendar-cita')}
+          className="btn-primary flex items-center"
+        >
           <Plus className="h-5 w-5 mr-2" />
           Nueva Cita
         </button>

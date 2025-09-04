@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, User, Stethoscope, Clock, FileText } from 'lucide-react';
+import { Calendar, User, Stethoscope, Clock, FileText, Activity } from 'lucide-react';
 import { apiService } from '../services/api';
 import { Doctor, Servicio } from '../types';
+import CustomSelect from '../components/CustomSelect';
 
 const AgendarCitaPage: React.FC = () => {
   const [doctores, setDoctores] = useState<Doctor[]>([]);
@@ -83,6 +84,13 @@ const AgendarCitaPage: React.FC = () => {
     });
   };
 
+  const handleServiceChange = (servicioId: string) => {
+    setFormData({ 
+      ...formData, 
+      servicioId 
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -146,24 +154,20 @@ const AgendarCitaPage: React.FC = () => {
           </div>
 
           {/* Selección de Doctor */}
-          <div className="space-y-2 relative z-10">
+          <div className="space-y-2">
             <label className="form-label flex items-center">
               <Stethoscope className="h-4 w-4 mr-2 text-medical-blue" />
               Doctor Especialista
             </label>
-            <select
+            <CustomSelect
+              options={doctores.map(doctor => ({
+                value: doctor.id,
+                label: `${doctor.nombre} - ${doctor.especialidad}`
+              }))}
               value={formData.doctorId}
-              onChange={(e) => handleDoctorChange(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white text-neutral-900 relative z-20"
-              required
-            >
-              <option value="">Seleccione el doctor de su preferencia</option>
-              {doctores.map((doctor) => (
-                <option key={doctor.id} value={doctor.id}>
-                  {doctor.nombre} - {doctor.especialidad}
-                </option>
-              ))}
-            </select>
+              onChange={handleDoctorChange}
+              placeholder="Seleccione el doctor de su preferencia"
+            />
             
             {selectedDoctor && (
               <div className="mt-2 p-3 bg-medical-blue bg-opacity-10 rounded-lg border border-medical-blue border-opacity-20">
@@ -205,24 +209,20 @@ const AgendarCitaPage: React.FC = () => {
           </div>
 
           {/* Selección de Servicio */}
-          <div className="space-y-2 relative z-10">
+          <div className="space-y-2">
             <label className="form-label flex items-center">
-              <Stethoscope className="h-4 w-4 mr-2 text-medical-green" />
-              Servicio Requerido
+              <Activity className="h-4 w-4 mr-2 text-medical-blue" />
+              Servicio Médico
             </label>
-            <select
+            <CustomSelect
+              options={servicios.map(servicio => ({
+                value: servicio.id,
+                label: `${servicio.nombre} - S/ ${servicio.precio}`
+              }))}
               value={formData.servicioId}
-              onChange={(e) => setFormData({ ...formData, servicioId: e.target.value })}
-              className="w-full px-4 py-3 border-2 border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white text-neutral-900 relative z-20"
-              required
-            >
-              <option value="">Seleccione el servicio dental</option>
-              {servicios.map((servicio) => (
-                <option key={servicio.id} value={servicio.id}>
-                  {servicio.nombre} - {servicio.duracion}min - S/ {servicio.precio}
-                </option>
-              ))}
-            </select>
+              onChange={handleServiceChange}
+              placeholder="Seleccione el servicio médico"
+            />
           </div>
 
           {/* Hora */}
