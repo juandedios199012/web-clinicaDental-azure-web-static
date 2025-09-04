@@ -31,13 +31,38 @@ const doctoresApi = {
   create: async (doctorData: CreateDoctorForm): Promise<Doctor> => {
     // Convertir los horarios de inicio y fin a array de horarios
     const horario = generateHorarioArray(doctorData.horarioInicio, doctorData.horarioFin);
+    
+    // Generar disponibilidades para los próximos 30 días
+    const today = new Date();
+    const disponibilidades = [];
+    
+    for (let i = 0; i < 30; i++) {
+      const fecha = new Date(today);
+      fecha.setDate(today.getDate() + i);
+      
+      // Solo días laborables (lunes a viernes)
+      if (fecha.getDay() >= 1 && fecha.getDay() <= 5) {
+        disponibilidades.push({
+          fecha: fecha.toISOString().split('T')[0],
+          horariosDisponibles: [...horario]
+        });
+      }
+    }
+    
     const data = {
       ...doctorData,
       horario,
+      disponibilidades,
       type: 'doctor',
       activo: true
     };
+    
+    console.log('🔍 Datos enviados al backend para crear doctor:', data);
+    console.log('📅 Horarios generados:', horario);
+    console.log('📅 Disponibilidades generadas:', disponibilidades);
+    
     const response = await apiClient.post('/doctors', data);
+    console.log('✅ Respuesta del backend:', response.data);
     return response.data;
   },
   
