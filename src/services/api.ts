@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { Doctor, Servicio, Cita, Disponibilidad, CreateDoctorForm, CreateServicioForm, CreateCitaForm } from '../types';
 
 // URL base del API - cambiar por tu URL de producción
-const API_BASE_URL = 'https://clinicadentalfunctions-aeezbtb0gva9fhbn.canadacentral-01.azurewebsites.net/api';
+const API_BASE_URL = 'https://clinicadentalfunctions-aeezbtb0gva9fva9.canadacentral-01.azurewebsites.net/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -24,7 +24,7 @@ apiClient.interceptors.response.use(
 // API Service para la clínica dental
 const doctoresApi = {
   getAll: async (): Promise<Doctor[]> => {
-    const response = await apiClient.get('/doctors');
+    const response = await apiClient.get('/doctores');
     return response.data;
   },
   
@@ -37,7 +37,7 @@ const doctoresApi = {
       type: 'doctor',
       activo: true
     };
-    const response = await apiClient.post('/doctors', data);
+    const response = await apiClient.post('/doctores', data);
     return response.data;
   },
   
@@ -46,12 +46,12 @@ const doctoresApi = {
     if (doctorData.horarioInicio && doctorData.horarioFin) {
       updateData.horario = generateHorarioArray(doctorData.horarioInicio, doctorData.horarioFin);
     }
-    const response = await apiClient.put(`/doctors/${id}`, updateData);
+    const response = await apiClient.put(`/doctores/${id}`, updateData);
     return response.data;
   },
   
   delete: async (id: string): Promise<void> => {
-    await apiClient.delete(`/doctors/${id}`);
+    await apiClient.delete(`/doctores/${id}`);
   }
 };
 
@@ -77,13 +77,13 @@ const generateHorarioArray = (inicio: string, fin: string): string[] => {
 export const serviciosApi = {
   // Obtener todos los servicios
   getAll: async (): Promise<Servicio[]> => {
-    const response = await apiClient.get('/services');
+    const response = await apiClient.get('/servicios');
     return response.data;
   },
 
   // Crear un nuevo servicio
   create: async (servicio: CreateServicioForm): Promise<Servicio> => {
-    const response = await apiClient.post('/services', servicio);
+    const response = await apiClient.post('/servicios', servicio);
     return response.data;
   },
 };
@@ -95,13 +95,13 @@ export const citasApi = {
     if (filters?.fecha) params.append('fecha', filters.fecha);
     if (filters?.doctorId) params.append('doctorId', filters.doctorId);
     
-    const response = await apiClient.get(`/appointments?${params}`);
+    const response = await apiClient.get(`/citas?${params}`);
     return response.data;
   },
 
   // Crear una nueva cita
   create: async (cita: CreateCitaForm): Promise<Cita> => {
-    const response = await apiClient.post('/appointments', cita);
+    const response = await apiClient.post('/citas', cita);
     return response.data;
   },
 };
@@ -109,7 +109,7 @@ export const citasApi = {
 export const disponibilidadApi = {
   // Obtener disponibilidad por doctor y fecha
   get: async (doctorId: string, fecha: string): Promise<Disponibilidad> => {
-    const response = await apiClient.get(`/availability?doctorId=${doctorId}&fecha=${fecha}`);
+    const response = await apiClient.get(`/disponibilidad?doctorId=${doctorId}&fecha=${fecha}`);
     return response.data;
   },
 };

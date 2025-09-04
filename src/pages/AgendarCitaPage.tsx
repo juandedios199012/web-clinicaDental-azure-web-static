@@ -32,15 +32,23 @@ const AgendarCitaPage: React.FC = () => {
   }, [formData.doctorId, formData.fecha]);
 
   const loadInitialData = async () => {
+    console.log('🔍 Cargando datos iniciales...');
     try {
-      const [doctoresData, serviciosData] = await Promise.all([
-        apiService.getDoctores(),
-        apiService.getServicios()
-      ]);
+      console.log('📡 Llamando a API doctores...');
+      const doctoresData = await apiService.getDoctores();
+      console.log('👨‍⚕️ Doctores recibidos:', doctoresData.length);
+      
+      console.log('📡 Llamando a API servicios...');
+      const serviciosData = await apiService.getServicios();
+      console.log('🦷 Servicios recibidos:', serviciosData.length);
+      
       setDoctores(doctoresData);
       setServicios(serviciosData);
+      
+      console.log('✅ Datos cargados exitosamente');
     } catch (error) {
-      console.error('Error loading initial data:', error);
+      console.error('❌ Error loading initial data:', error);
+      console.error('🔍 Detalles del error:', (error as any).response?.data || (error as Error).message);
     }
   };
 
