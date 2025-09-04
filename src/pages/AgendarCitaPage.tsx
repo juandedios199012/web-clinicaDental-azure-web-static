@@ -24,12 +24,12 @@ const AgendarCitaPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (formData.doctorId && formData.fecha) {
+    if (formData.doctorId && formData.fecha && selectedDoctor) {
       loadDisponibilidad();
     } else {
       setHorariosDisponibles([]);
     }
-  }, [formData.doctorId, formData.fecha]);
+  }, [formData.doctorId, formData.fecha, selectedDoctor]);
 
   const loadInitialData = async () => {
     console.log('🔍 Cargando datos iniciales...');
@@ -53,11 +53,20 @@ const AgendarCitaPage: React.FC = () => {
   };
 
   const loadDisponibilidad = async () => {
-    if (!formData.doctorId || !formData.fecha) return;
+    if (!formData.doctorId || !formData.fecha || !selectedDoctor) {
+      setHorariosDisponibles([]);
+      return;
+    }
     
     try {
-      const disponibilidad = await apiService.getDisponibilidad(formData.doctorId, formData.fecha);
-      setHorariosDisponibles(disponibilidad.horariosDisponibles || []);
+      // Usar los horarios del doctor directamente
+      if (selectedDoctor.horario && Array.isArray(selectedDoctor.horario)) {
+        setHorariosDisponibles(selectedDoctor.horario);
+        console.log('✅ Horarios disponibles:', selectedDoctor.horario);
+      } else {
+        console.log('⚠️ No hay horarios definidos para este doctor');
+        setHorariosDisponibles([]);
+      }
     } catch (error) {
       console.error('Error loading availability:', error);
       setHorariosDisponibles([]);
@@ -137,7 +146,7 @@ const AgendarCitaPage: React.FC = () => {
           </div>
 
           {/* Selección de Doctor */}
-          <div className="space-y-2">
+          <div className="space-y-2 relative z-10">
             <label className="form-label flex items-center">
               <Stethoscope className="h-4 w-4 mr-2 text-medical-blue" />
               Doctor Especialista
@@ -145,7 +154,7 @@ const AgendarCitaPage: React.FC = () => {
             <select
               value={formData.doctorId}
               onChange={(e) => handleDoctorChange(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white text-neutral-900"
+              className="w-full px-4 py-3 border-2 border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white text-neutral-900 relative z-20"
               required
             >
               <option value="">Seleccione el doctor de su preferencia</option>
@@ -157,12 +166,18 @@ const AgendarCitaPage: React.FC = () => {
             </select>
             
             {selectedDoctor && (
-              <div className="mt-2 p-3 bg-medical-blue bg-opacity-10 rounded-lg">
+              <div className="mt-2 p-3 bg-medical-blue bg-opacity-10 rounded-lg border border-medical-blue border-opacity-20">
                 <p className="text-sm text-neutral-700">
                   <strong>Especialidad:</strong> {selectedDoctor.especialidad}
                 </p>
                 <p className="text-sm text-neutral-700">
-                  <strong>Horario:</strong> {selectedDoctor.horarioInicio} - {selectedDoctor.horarioFin}
+                  <strong>Horarios de Atención:</strong> {selectedDoctor.horario && selectedDoctor.horario.length > 0 
+                    ? `${selectedDoctor.horario[0]} - ${selectedDoctor.horario[selectedDoctor.horario.length - 1]}` 
+                    : 'Consultar disponibilidad'
+                  }
+                </p>
+                <p className="text-xs text-medical-blue mt-1">
+                  💡 Seleccione una fecha para ver horarios disponibles específicos
                 </p>
               </div>
             )}
@@ -190,7 +205,7 @@ const AgendarCitaPage: React.FC = () => {
           </div>
 
           {/* Selección de Servicio */}
-          <div className="space-y-2">
+          <div className="space-y-2 relative z-10">
             <label className="form-label flex items-center">
               <Stethoscope className="h-4 w-4 mr-2 text-medical-green" />
               Servicio Requerido
@@ -198,7 +213,7 @@ const AgendarCitaPage: React.FC = () => {
             <select
               value={formData.servicioId}
               onChange={(e) => setFormData({ ...formData, servicioId: e.target.value })}
-              className="w-full px-4 py-3 border-2 border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white text-neutral-900"
+              className="w-full px-4 py-3 border-2 border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white text-neutral-900 relative z-20"
               required
             >
               <option value="">Seleccione el servicio dental</option>
