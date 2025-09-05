@@ -66,23 +66,35 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-neutral-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-          {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => handleSelect(option.value)}
-              className={`w-full px-4 py-3 text-left hover:bg-primary-50 transition-colors duration-150 flex items-center justify-between ${
-                value === option.value ? 'bg-primary-50 text-primary-700' : 'text-neutral-900'
-              }`}
-            >
-              <span>{option.label}</span>
-              {value === option.value && (
-                <Check className="h-4 w-4 text-primary-600" />
-              )}
-            </button>
-          ))}
-        </div>
+        <>
+          {/* Overlay para cerrar al hacer clic fuera */}
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          
+          {/* Dropdown options */}
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-neutral-200 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
+            {options.length === 0 ? (
+              <div className="px-4 py-3 text-neutral-500 text-sm">
+                No hay opciones disponibles
+              </div>
+            ) : (
+              options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleSelect(option.value)}
+                  className={`w-full px-4 py-3 text-left hover:bg-primary-50 transition-colors duration-150 flex items-center justify-between ${
+                    value === option.value ? 'bg-primary-50 text-primary-700' : 'text-neutral-900'
+                  }`}
+                >
+                  <span>{option.label}</span>
+                  {value === option.value && (
+                    <Check className="h-4 w-4 text-primary-600" />
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+        </>
       )}
     </div>
   );

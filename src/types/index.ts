@@ -17,6 +17,8 @@ export interface Servicio {
   id: string;
   type: 'service';
   nombre: string;
+  especialidad: string; // Campo agregado para reportes
+  categoria?: string; // Campo opcional para categorización adicional
   duracion: number; // en minutos
   precio: number;
   activo: boolean;
@@ -47,6 +49,53 @@ export interface Disponibilidad {
   horarioCompleto: string[];
   horasOcupadas: string[];
   horariosDisponibles: string[];
+}
+
+// Paciente (estructura del API real)
+export interface Paciente {
+  id: string;
+  nombre: string;
+  apellido: string;
+  correoElectronico: string;
+  numeroTelefono: string;
+  pais: string;
+  ciudad: string;
+  direccion: string;
+  aceptaPoliticas: boolean;
+  fechaRegistro: string;
+  activo: boolean;
+}
+
+export interface CreatePacienteForm {
+  nombre: string;
+  apellido: string;
+  correoElectronico: string;
+  numeroTelefono: string;
+  pais: string;
+  ciudad: string;
+  direccion: string;
+  aceptaPoliticas: boolean;
+}
+
+// Países, ciudades y sucursales
+export interface Pais {
+  codigo: string;
+  nombre: string;
+}
+
+export interface Ciudad {
+  codigo: string;
+  nombre: string;
+  pais: string;
+}
+
+export interface Sucursal {
+  id: string;
+  nombre: string;
+  direccion: string;
+  ciudad: string;
+  telefono: string;
+  activa: boolean;
 }
 
 export interface ApiResponse<T> {

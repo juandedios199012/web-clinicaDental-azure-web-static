@@ -1,7 +1,7 @@
 import axios from 'axios';
-import type { Doctor, Servicio, Cita, Disponibilidad, CreateDoctorForm, CreateServicioForm, CreateCitaForm } from '../types';
+import type { Doctor, Servicio, Cita, Disponibilidad, CreateDoctorForm, CreateServicioForm, CreateCitaForm, Paciente, CreatePacienteForm, Pais, Ciudad, Sucursal } from '../types';
 
-// URL base del API - cambiar por tu URL de producción
+// URL base del API - usar tu API real
 const API_BASE_URL = 'https://clinicadentalfunctions-aeezbtb0gva9fhbn.canadacentral-01.azurewebsites.net/api';
 
 const apiClient = axios.create({
@@ -84,16 +84,56 @@ const generateHorarioArray = (inicio: string, fin: string): string[] => {
   return horarios;
 };
 
+// Función helper para mapear especialidades basadas en el nombre del servicio
+const mapearEspecialidad = (nombreServicio: string): string => {
+  const servicioLower = nombreServicio.toLowerCase();
+  
+  if (servicioLower.includes('limpieza') || servicioLower.includes('profilaxis')) {
+    return 'Higiene Dental';
+  } else if (servicioLower.includes('extracción') || servicioLower.includes('cirugía')) {
+    return 'Cirugía Oral';
+  } else if (servicioLower.includes('endodoncia') || servicioLower.includes('conducto')) {
+    return 'Endodoncia';
+  } else if (servicioLower.includes('blanqueamiento') || servicioLower.includes('estética')) {
+    return 'Estética Dental';
+  } else if (servicioLower.includes('ortodoncia') || servicioLower.includes('brackets')) {
+    return 'Ortodoncia';
+  } else if (servicioLower.includes('implante') || servicioLower.includes('prótesis')) {
+    return 'Implantología';
+  } else if (servicioLower.includes('periodoncia') || servicioLower.includes('encías')) {
+    return 'Periodoncia';
+  } else {
+    return 'Odontología General';
+  }
+};
+
 export const serviciosApi = {
-  // Obtener todos los servicios
+  // Obtener todos los servicios con especialidades mapeadas
   getAll: async (): Promise<Servicio[]> => {
-    const response = await apiClient.get('/services');
-    return response.data;
+    try {
+      const response = await apiClient.get('/services');
+      const servicios = response.data;
+      
+      // Mapear especialidades basadas en el nombre del servicio para reportes
+      const serviciosConEspecialidad = servicios.map((servicio: any) => ({
+        ...servicio,
+        especialidad: mapearEspecialidad(servicio.nombre)
+      }));
+      
+      return serviciosConEspecialidad;
+    } catch (error) {
+      console.error('Error al obtener servicios:', error);
+      return [];
+    }
   },
 
   // Crear un nuevo servicio
   create: async (servicio: CreateServicioForm): Promise<Servicio> => {
-    const response = await apiClient.post('/services', servicio);
+    const servicioConEspecialidad = {
+      ...servicio,
+      especialidad: mapearEspecialidad(servicio.nombre)
+    };
+    const response = await apiClient.post('/services', servicioConEspecialidad);
     return response.data;
   },
 };
@@ -114,6 +154,123 @@ export const citasApi = {
     const response = await apiClient.post('/appointments', cita);
     return response.data;
   },
+};
+
+export const pacientesApi = {
+  // Obtener todos los pacientes
+  getAll: async (): Promise<Paciente[]> => {
+    const response = await apiClient.get('/patients');
+    return response.data;
+  },
+
+  // Crear un nuevo paciente
+  create: async (paciente: CreatePacienteForm): Promise<Paciente> => {
+    const response = await apiClient.post('/patients', paciente);
+    return response.data;
+  },
+
+  // Obtener paciente por ID
+  getById: async (id: string): Promise<Paciente> => {
+    const response = await apiClient.get(`/patients/${id}`);
+    return response.data;
+  },
+
+  // Actualizar paciente
+  update: async (id: string, paciente: Partial<CreatePacienteForm>): Promise<Paciente> => {
+    const response = await apiClient.put(`/patients/${id}`, paciente);
+    return response.data;
+  },
+
+  // Eliminar paciente
+  delete: async (id: string): Promise<void> => {
+    await apiClient.delete(`/patients/${id}`);
+  },
+};
+
+export const configuracionApi = {
+  // Obtener países - usando endpoint real
+  getPaises: async (): Promise<Pais[]> => {
+    try {
+      const response = await apiClient.get('/config/countries');
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener países:', error);
+      // Fallback con países comunes
+      return [
+        { codigo: 'PE', nombre: 'Perú' },
+        { codigo: 'CO', nombre: 'Colombia' },
+        { codigo: 'EC', nombre: 'Ecuador' },
+        { codigo: 'BO', nombre: 'Bolivia' },
+        { codigo: 'MX', nombre: 'México' },
+        { codigo: 'AR', nombre: 'Argentina' },
+        { codigo: 'CL', nombre: 'Chile' },
+        { codigo: 'VE', nombre: 'Venezuela' },
+        { codigo: 'US', nombre: 'Estados Unidos' },
+        { codigo: 'ES', nombre: 'España' }
+      ];
+    }
+  },
+
+  // Obtener ciudades por país - usando endpoint real
+  getCiudades: async (pais: string): Promise<Ciudad[]> => {
+    try {
+      const response = await apiClient.get(`/config/cities?pais=${pais}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener ciudades:', error);
+      // Fallback con ciudades según el país
+      return getCiudadesFallback(pais);
+    }
+  },
+
+  // Obtener sucursales - usando endpoint real
+  getSucursales: async (): Promise<Sucursal[]> => {
+    try {
+      const response = await apiClient.get('/config/sucursales');
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener sucursales:', error);
+      // Fallback con sucursales de ejemplo
+      return [
+        {
+          id: '1',
+          nombre: 'Sucursal Principal',
+          direccion: 'Av. Principal 123',
+          ciudad: 'Lima',
+          telefono: '+51 999 999 999',
+          activa: true
+        },
+        {
+          id: '2',
+          nombre: 'Sucursal Norte',
+          direccion: 'Av. Norte 456',
+          ciudad: 'Lima',
+          telefono: '+51 888 888 888',
+          activa: true
+        }
+      ];
+    }
+  }
+};
+
+// Función helper para ciudades fallback
+const getCiudadesFallback = (pais: string): Ciudad[] => {
+  const ciudadesPorPais: Record<string, Ciudad[]> = {
+    'PE': [
+      { codigo: 'LIM', nombre: 'Lima', pais: 'PE' },
+      { codigo: 'ARE', nombre: 'Arequipa', pais: 'PE' },
+      { codigo: 'TRU', nombre: 'Trujillo', pais: 'PE' },
+      { codigo: 'CHI', nombre: 'Chiclayo', pais: 'PE' }
+    ],
+    'CO': [
+      { codigo: 'BOG', nombre: 'Bogotá', pais: 'CO' },
+      { codigo: 'MED', nombre: 'Medellín', pais: 'CO' },
+      { codigo: 'CAL', nombre: 'Cali', pais: 'CO' },
+      { codigo: 'BAR', nombre: 'Barranquilla', pais: 'CO' }
+    ]
+  };
+  
+  return ciudadesPorPais[pais] || [];
 };
 
 export const disponibilidadApi = {
@@ -139,6 +296,18 @@ export const apiService = {
   // Citas
   getCitas: citasApi.getAll,
   createCita: citasApi.create,
+  
+  // Pacientes
+  getPacientes: pacientesApi.getAll,
+  createPaciente: pacientesApi.create,
+  getPacienteById: pacientesApi.getById,
+  updatePaciente: pacientesApi.update,
+  deletePaciente: pacientesApi.delete,
+  
+  // Configuración
+  getPaises: configuracionApi.getPaises,
+  getCiudades: configuracionApi.getCiudades,
+  getSucursales: configuracionApi.getSucursales,
   
   // Disponibilidad
   getDisponibilidad: disponibilidadApi.get,

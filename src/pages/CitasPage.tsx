@@ -2,18 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Calendar, User, Stethoscope } from 'lucide-react';
 import { apiService } from '../services/api';
-import { Cita } from '../types';
+import { Cita, Servicio } from '../types';
 
 const CitasPage: React.FC = () => {
   const navigate = useNavigate();
   const [citas, setCitas] = useState<Cita[]>([]);
+  const [servicios, setServicios] = useState<Servicio[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     loadCitas();
+    loadServicios();
   }, [dateFilter]);
+
+  const loadServicios = async () => {
+    try {
+      const data = await apiService.getServicios();
+      setServicios(data);
+    } catch (error) {
+      console.error('Error loading services:', error);
+    }
+  };
 
   const loadCitas = async () => {
     try {
@@ -32,10 +43,26 @@ const CitasPage: React.FC = () => {
     }
   };
 
+  // Función helper para obtener el nombre del servicio
+  const getServicioNombre = (cita: Cita): string => {
+    // Primero intentar el campo servicioNombre del backend
+    if (cita.servicioNombre) {
+      return cita.servicioNombre;
+    }
+    
+    // Si no existe, buscar en la lista de servicios cargados
+    const servicio = servicios.find(s => s.id === cita.servicioId);
+    if (servicio) {
+      return servicio.nombre;
+    }
+    
+    return 'No especificado';
+  };
+
   const filteredCitas = citas.filter(cita =>
     cita.pacienteNombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cita.doctorNombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cita.servicioNombre.toLowerCase().includes(searchTerm.toLowerCase())
+    getServicioNombre(cita).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusColor = (status: string) => {
@@ -140,7 +167,13 @@ const CitasPage: React.FC = () => {
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-medium text-neutral-700">Servicio:</p>
                   </div>
-                  <p className="text-sm text-neutral-900 font-medium">{cita.servicioNombre || 'No especificado'}</p>
+                  <p className="text-sm text-neutral-900 font-medium">
+                    {getServicioNombre(cita)}
+                  </p>
+                  {/* Debug temporal */}
+                  <div className="text-xs text-gray-500 mt-1 p-2 bg-yellow-50 rounded">
+                    <strong>Debug:</strong> servicioNombre: "{cita.servicioNombre}", servicioId: "{cita.servicioId}"
+                  </div>
                   {cita.notas && (
                     <>
                       <p className="text-sm font-medium text-neutral-700 mt-3">Notas:</p>
