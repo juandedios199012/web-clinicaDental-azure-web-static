@@ -33,21 +33,25 @@ const PacientesPage: React.FC = () => {
       console.log('🔄 Iniciando carga de datos iniciales...');
       
       // Consultar API optimizada
-      console.log('📡 Consultando API optimizada de países...');
+      console.log('📡 Consultando API de países...');
       const paisesFromAPI = await apiService.getPaises();
       console.log('🌍 Países recibidos desde API:', paisesFromAPI);
       console.log('📊 Cantidad de países:', paisesFromAPI?.length || 0);
       
       if (paisesFromAPI && paisesFromAPI.length > 0) {
         console.log('✅ API funcionó correctamente, usando sus datos');
+        console.log('📋 Lista completa de países recibidos:');
+        paisesFromAPI.forEach((pais, index) => {
+          console.log(`${index + 1}. ${pais.codigo}: ${pais.nombre}`);
+        });
         setPaises(paisesFromAPI);
       } else {
-        console.log('⚠️ API no devolvió datos válidos');
+        console.error('❌ API devolvió array vacío o nulo');
         setPaises([]);
       }
       
       // Cargar pacientes
-      console.log('� Llamando a apiService.getPacientes()...');
+      console.log('👥 Llamando a apiService.getPacientes()...');
       const pacientesData = await apiService.getPacientes();
       console.log('📦 Pacientes cargados:', pacientesData?.length || 0);
       setPacientes(pacientesData);
@@ -55,18 +59,10 @@ const PacientesPage: React.FC = () => {
       console.log('✅ Carga inicial completada');
     } catch (error) {
       console.error('❌ Error loading initial data:', error);
-      // Asegurar que al menos tengamos datos de fallback para países
-      if (paises.length === 0) {
-        console.log('🔄 Usando datos de fallback para países...');
-        const fallbackPaises = [
-          { codigo: 'PE', nombre: 'Perú' },
-          { codigo: 'CO', nombre: 'Colombia' },
-          { codigo: 'EC', nombre: 'Ecuador' },
-          { codigo: 'BO', nombre: 'Bolivia' },
-          { codigo: 'MX', nombre: 'México' }
-        ];
-        setPaises(fallbackPaises);
-      }
+      console.error('🔍 Detalles del error:', error instanceof Error ? error.message : 'Error desconocido');
+      // NO usar fallback - el error debe ser visible
+      setPaises([]);
+      setPacientes([]);
     } finally {
       setLoading(false);
     }
@@ -361,7 +357,10 @@ const PacientesPage: React.FC = () => {
                     <div>
                       <label className="form-label">País *</label>
                       <CustomSelect
-                        options={paises.map(pais => ({ value: pais.nombre, label: pais.nombre }))}
+                        options={(() => {
+                          console.log('🔍 RENDER: Países disponibles para dropdown:', paises.length, paises);
+                          return paises.map(pais => ({ value: pais.nombre, label: pais.nombre }));
+                        })()}
                         value={formData.pais}
                         onChange={handlePaisChange}
                         placeholder="Seleccione un país"

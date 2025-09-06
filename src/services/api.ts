@@ -112,24 +112,46 @@ export const serviciosApi = {
   getAll: async (): Promise<Servicio[]> => {
     try {
       console.log('🔄 Cargando servicios desde API...');
+      console.log('🌐 URL completa:', `${API_BASE_URL}/services`);
+      
       const response = await apiClient.get('/services');
       const servicios = response.data;
-      console.log('📦 Servicios recibidos:', servicios);
+      
+      console.log('📦 Servicios recibidos del API:', {
+        cantidad: servicios?.length || 0,
+        datos: servicios
+      });
+      
+      if (!servicios || !Array.isArray(servicios)) {
+        console.error('❌ La respuesta no es un array válido:', servicios);
+        return [];
+      }
       
       // Mapear especialidades basadas en el nombre del servicio para reportes
       const serviciosConEspecialidad = servicios.map((servicio: any) => {
         const especialidad = mapearEspecialidad(servicio.nombre);
-        console.log(`🎯 "${servicio.nombre}" → "${especialidad}"`);
-        return {
+        console.log(`🎯 Mapeo: "${servicio.nombre}" → Especialidad: "${especialidad}"`);
+        
+        const servicioCompleto = {
           ...servicio,
           especialidad
         };
+        
+        console.log('📄 Servicio completo:', servicioCompleto);
+        return servicioCompleto;
       });
       
-      console.log('✅ Servicios con especialidades:', serviciosConEspecialidad);
+      console.log('✅ Total servicios procesados:', serviciosConEspecialidad.length);
+      console.log('✅ Servicios finales con especialidades:', serviciosConEspecialidad);
+      
       return serviciosConEspecialidad;
     } catch (error) {
-      console.error('❌ Error al obtener servicios:', error);
+      console.error('❌ Error completo al obtener servicios:', {
+        message: error instanceof Error ? error.message : 'Error desconocido',
+        status: (error as any)?.response?.status,
+        data: (error as any)?.response?.data,
+        url: (error as any)?.config?.url
+      });
       return [];
     }
   },
@@ -200,24 +222,22 @@ export const configuracionApi = {
     try {
       console.log('🌐 API: Intentando obtener países de', API_BASE_URL + '/config/countries');
       const response = await apiClient.get('/config/countries');
-      console.log('✅ API: Respuesta recibida:', response.status, response.data?.length, 'países');
-      return response.data;
+      console.log('✅ API: Respuesta recibida:', response.status);
+      console.log('📋 API: Datos completos de países:', response.data);
+      console.log('📊 API: Cantidad de países:', response.data?.length);
+      
+      // Verificar que los datos sean válidos
+      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+        console.log('✅ API: Datos válidos, devolviendo países de la API');
+        return response.data;
+      } else {
+        console.error('⚠️ API: Datos inválidos o vacíos:', response.data);
+        throw new Error('API devolvió datos inválidos o vacíos');
+      }
     } catch (error) {
       console.error('❌ API: Error al obtener países:', error);
-      console.log('🔄 API: Usando fallback de países...');
-      // Fallback con países comunes
-      return [
-        { codigo: 'PE', nombre: 'Perú' },
-        { codigo: 'CO', nombre: 'Colombia' },
-        { codigo: 'EC', nombre: 'Ecuador' },
-        { codigo: 'BO', nombre: 'Bolivia' },
-        { codigo: 'MX', nombre: 'México' },
-        { codigo: 'AR', nombre: 'Argentina' },
-        { codigo: 'CL', nombre: 'Chile' },
-        { codigo: 'VE', nombre: 'Venezuela' },
-        { codigo: 'US', nombre: 'Estados Unidos' },
-        { codigo: 'ES', nombre: 'España' }
-      ];
+      // NO usar fallback - dejar que el error se propague al frontend
+      throw error;
     }
   },
 

@@ -3,6 +3,7 @@ import { BarChart3, PieChart, TrendingUp, Calendar, Users, DollarSign, Filter, D
 import { apiService } from '../services/api';
 import { Cita, Servicio, Sucursal } from '../types';
 import CustomSelect from '../components/CustomSelect';
+import TestServicios from '../components/TestServicios';
 
 interface ReportFilters {
   sucursal: string;
@@ -70,20 +71,38 @@ const ReportesPage: React.FC = () => {
   const loadInitialData = async () => {
     setLoading(true);
     try {
+      console.log('🔄 [REPORTES] Iniciando carga de datos...');
+      
       const [citasData, serviciosData, sucursalesData] = await Promise.all([
         apiService.getCitas(),
         apiService.getServicios(),
         apiService.getSucursales()
       ]);
       
+      console.log('📊 [REPORTES] Datos cargados:', {
+        citas: citasData?.length || 0,
+        servicios: serviciosData?.length || 0,
+        sucursales: sucursalesData?.length || 0
+      });
+      
       setCitas(citasData);
-      console.log('🧪 Servicios cargados en ReportesPage:', serviciosData);
-      console.log('🧪 Especialidades detectadas:', serviciosData.map(s => ({ nombre: s.nombre, especialidad: s.especialidad })));
+      
+      console.log('🧪 [REPORTES] Servicios detallados recibidos:', serviciosData);
+      console.log('🧪 [REPORTES] Especialidades por servicio:', 
+        serviciosData?.map(s => ({ 
+          id: s.id,
+          nombre: s.nombre, 
+          especialidad: s.especialidad 
+        })) || []
+      );
+      
       setServicios(serviciosData);
       setSucursales(sucursalesData);
       setLastUpdated(new Date());
+      
+      console.log('✅ [REPORTES] Carga de datos completada exitosamente');
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('❌ [REPORTES] Error loading data:', error);
     } finally {
       setLoading(false);
     }
@@ -236,11 +255,18 @@ const ReportesPage: React.FC = () => {
   };
 
   const especialidades = [...new Set(servicios.map(s => s.especialidad).filter(Boolean))];
-  console.log('🎯 Especialidades únicas generadas:', especialidades);
-  console.log('🎯 Servicios con especialidad:', servicios.map(s => ({ nombre: s.nombre, especialidad: s.especialidad })));
+  console.log('🎯 [REPORTES] Servicios para especialidades:', servicios.map(s => ({ nombre: s.nombre, especialidad: s.especialidad })));
+  console.log('🎯 [REPORTES] Especialidades únicas generadas:', especialidades);
+  console.log('🎯 [REPORTES] Total servicios disponibles:', servicios.length);
+  console.log('🎯 [REPORTES] Total especialidades únicas:', especialidades.length);
 
   return (
     <div>
+      {/* Componente de prueba temporal */}
+      <div className="mb-6">
+        <TestServicios />
+      </div>
+      
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-neutral-900">Dashboard de Reportes</h1>
@@ -292,13 +318,25 @@ const ReportesPage: React.FC = () => {
           <div>
             <label className="form-label">Tipo de Servicio</label>
             <CustomSelect
-              options={[
-                { value: '', label: 'Todos los servicios' },
-                ...(loading ? 
-                  [{ value: 'loading', label: 'Cargando servicios...' }] : 
-                  especialidades.map(especialidad => ({ value: especialidad, label: especialidad }))
-                )
-              ]}
+              options={(() => {
+                console.log('🔍 [REPORTES-DROPDOWN] Estado actual:', {
+                  loading,
+                  totalServicios: servicios.length,
+                  totalEspecialidades: especialidades.length,
+                  especialidades
+                });
+                
+                if (loading) {
+                  console.log('🔄 [REPORTES-DROPDOWN] Mostrando loading...');
+                  return [{ value: 'loading', label: 'Cargando servicios...' }];
+                } else {
+                  console.log('✅ [REPORTES-DROPDOWN] Mostrando especialidades:', especialidades);
+                  return [
+                    { value: '', label: 'Todos los servicios' },
+                    ...especialidades.map(especialidad => ({ value: especialidad, label: especialidad }))
+                  ];
+                }
+              })()}
               value={filters.tipoServicio}
               onChange={(value) => setFilters({ ...filters, tipoServicio: value })}
               placeholder="Seleccione tipo"

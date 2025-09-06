@@ -28,8 +28,14 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
   // Debug log para opciones (solo en desarrollo)
   useEffect(() => {
-    // Logs removidos para producción
-  }, [options, placeholder]);
+    if (placeholder.includes('servicio') || placeholder.includes('Servicio')) {
+      console.log(`🔍 [CustomSelect] ${placeholder}:`, {
+        totalOptions: options.length,
+        options: options.map(opt => ({ value: opt.value, label: opt.label })),
+        currentValue: value
+      });
+    }
+  }, [options, placeholder, value]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
