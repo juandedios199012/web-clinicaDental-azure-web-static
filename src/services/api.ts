@@ -224,10 +224,16 @@ export const configuracionApi = {
   // Obtener ciudades por país - usando endpoint real
   getCiudades: async (pais: string): Promise<Ciudad[]> => {
     try {
-      const response = await apiClient.get(`/config/cities?pais=${pais}`);
+      console.log('🏙️ Solicitando ciudades para país:', pais);
+      const url = `/config/cities?pais=${encodeURIComponent(pais)}`;
+      console.log('🌐 URL construida:', url);
+      
+      const response = await apiClient.get(url);
+      console.log('📍 Ciudades recibidas:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error al obtener ciudades:', error);
+      console.error('❌ Error al obtener ciudades:', error);
+      console.log('🔄 Usando fallback para país:', pais);
       // Fallback con ciudades según el país
       return getCiudadesFallback(pais);
     }

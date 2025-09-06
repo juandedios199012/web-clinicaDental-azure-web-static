@@ -73,14 +73,17 @@ const PacientesPage: React.FC = () => {
   };
 
   const handlePaisChange = async (paisCodigo: string) => {
+    console.log('🌍 País seleccionado:', paisCodigo);
     setFormData({ ...formData, pais: paisCodigo, ciudad: '' });
     
     if (paisCodigo) {
       try {
+        console.log('🔄 Cargando ciudades para:', paisCodigo);
         const ciudadesData = await apiService.getCiudades(paisCodigo);
+        console.log('🏙️ Ciudades cargadas:', ciudadesData);
         setCiudades(ciudadesData);
       } catch (error) {
-        console.error('Error loading cities:', error);
+        console.error('❌ Error loading cities:', error);
         setCiudades([]);
       }
     } else {
@@ -358,7 +361,7 @@ const PacientesPage: React.FC = () => {
                     <div>
                       <label className="form-label">País *</label>
                       <CustomSelect
-                        options={paises.map(pais => ({ value: pais.codigo, label: pais.nombre }))}
+                        options={paises.map(pais => ({ value: pais.nombre, label: pais.nombre }))}
                         value={formData.pais}
                         onChange={handlePaisChange}
                         placeholder="Seleccione un país"
