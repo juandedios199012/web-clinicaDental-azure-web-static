@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { Doctor, Servicio, Cita, Disponibilidad, CreateDoctorForm, CreateServicioForm, CreateCitaForm, Paciente, CreatePacienteForm, Pais, Ciudad, Sucursal } from '../types';
 
-// URL base del API - usar tu API real
+// URL base del API - usar API real siempre
 const API_BASE_URL = 'https://clinicadentalfunctions-aeezbtb0gva9fhbn.canadacentral-01.azurewebsites.net/api';
 
 const apiClient = axios.create({
@@ -9,7 +9,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 15000, // Aumentar timeout a 15 segundos
 });
 
 // Interceptor para manejo de errores
@@ -96,7 +96,7 @@ const mapearEspecialidad = (nombreServicio: string): string => {
     return 'Endodoncia';
   } else if (servicioLower.includes('blanqueamiento') || servicioLower.includes('estética')) {
     return 'Estética Dental';
-  } else if (servicioLower.includes('ortodoncia') || servicioLower.includes('brackets')) {
+  } else if (servicioLower.includes('ortodoncia') || servicioLower.includes('brackets') || servicioLower.includes('brakers')) {
     return 'Ortodoncia';
   } else if (servicioLower.includes('implante') || servicioLower.includes('prótesis')) {
     return 'Implantología';
@@ -111,18 +111,25 @@ export const serviciosApi = {
   // Obtener todos los servicios con especialidades mapeadas
   getAll: async (): Promise<Servicio[]> => {
     try {
+      console.log('🔄 Cargando servicios desde API...');
       const response = await apiClient.get('/services');
       const servicios = response.data;
+      console.log('📦 Servicios recibidos:', servicios);
       
       // Mapear especialidades basadas en el nombre del servicio para reportes
-      const serviciosConEspecialidad = servicios.map((servicio: any) => ({
-        ...servicio,
-        especialidad: mapearEspecialidad(servicio.nombre)
-      }));
+      const serviciosConEspecialidad = servicios.map((servicio: any) => {
+        const especialidad = mapearEspecialidad(servicio.nombre);
+        console.log(`🎯 "${servicio.nombre}" → "${especialidad}"`);
+        return {
+          ...servicio,
+          especialidad
+        };
+      });
       
+      console.log('✅ Servicios con especialidades:', serviciosConEspecialidad);
       return serviciosConEspecialidad;
     } catch (error) {
-      console.error('Error al obtener servicios:', error);
+      console.error('❌ Error al obtener servicios:', error);
       return [];
     }
   },
@@ -139,7 +146,7 @@ export const serviciosApi = {
 };
 
 export const citasApi = {
-  // Obtener todas las citas o filtradas
+  // Obtener todas las citas o filtradas  
   getAll: async (filters?: { fecha?: string; doctorId?: string }): Promise<Cita[]> => {
     const params = new URLSearchParams();
     if (filters?.fecha) params.append('fecha', filters.fecha);
@@ -191,10 +198,13 @@ export const configuracionApi = {
   // Obtener países - usando endpoint real
   getPaises: async (): Promise<Pais[]> => {
     try {
+      console.log('🌐 API: Intentando obtener países de', API_BASE_URL + '/config/countries');
       const response = await apiClient.get('/config/countries');
+      console.log('✅ API: Respuesta recibida:', response.status, response.data?.length, 'países');
       return response.data;
     } catch (error) {
-      console.error('Error al obtener países:', error);
+      console.error('❌ API: Error al obtener países:', error);
+      console.log('🔄 API: Usando fallback de países...');
       // Fallback con países comunes
       return [
         { codigo: 'PE', nombre: 'Perú' },
@@ -267,6 +277,24 @@ const getCiudadesFallback = (pais: string): Ciudad[] => {
       { codigo: 'MED', nombre: 'Medellín', pais: 'CO' },
       { codigo: 'CAL', nombre: 'Cali', pais: 'CO' },
       { codigo: 'BAR', nombre: 'Barranquilla', pais: 'CO' }
+    ],
+    'AR': [
+      { codigo: 'BA', nombre: 'Buenos Aires', pais: 'AR' },
+      { codigo: 'COR', nombre: 'Córdoba', pais: 'AR' },
+      { codigo: 'ROS', nombre: 'Rosario', pais: 'AR' },
+      { codigo: 'MDZ', nombre: 'Mendoza', pais: 'AR' }
+    ],
+    'CL': [
+      { codigo: 'STG', nombre: 'Santiago', pais: 'CL' },
+      { codigo: 'VAL', nombre: 'Valparaíso', pais: 'CL' },
+      { codigo: 'CON', nombre: 'Concepción', pais: 'CL' },
+      { codigo: 'ANT', nombre: 'Antofagasta', pais: 'CL' }
+    ],
+    'MX': [
+      { codigo: 'CDMX', nombre: 'Ciudad de México', pais: 'MX' },
+      { codigo: 'GDL', nombre: 'Guadalajara', pais: 'MX' },
+      { codigo: 'MTY', nombre: 'Monterrey', pais: 'MX' },
+      { codigo: 'PUE', nombre: 'Puebla', pais: 'MX' }
     ]
   };
   

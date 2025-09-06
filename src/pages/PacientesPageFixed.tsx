@@ -31,18 +31,42 @@ const PacientesPage: React.FC = () => {
   const loadInitialData = async () => {
     try {
       console.log('🔄 Iniciando carga de datos iniciales...');
-      const [pacientesData, paisesData] = await Promise.all([
-        apiService.getPacientes(),
-        apiService.getPaises()
-      ]);
       
+      // Consultar API optimizada
+      console.log('📡 Consultando API optimizada de países...');
+      const paisesFromAPI = await apiService.getPaises();
+      console.log('🌍 Países recibidos desde API:', paisesFromAPI);
+      console.log('📊 Cantidad de países:', paisesFromAPI?.length || 0);
+      
+      if (paisesFromAPI && paisesFromAPI.length > 0) {
+        console.log('✅ API funcionó correctamente, usando sus datos');
+        setPaises(paisesFromAPI);
+      } else {
+        console.log('⚠️ API no devolvió datos válidos');
+        setPaises([]);
+      }
+      
+      // Cargar pacientes
+      console.log('� Llamando a apiService.getPacientes()...');
+      const pacientesData = await apiService.getPacientes();
       console.log('📦 Pacientes cargados:', pacientesData?.length || 0);
-      console.log('🌍 Países cargados:', paisesData);
-      
       setPacientes(pacientesData);
-      setPaises(paisesData);
+      
+      console.log('✅ Carga inicial completada');
     } catch (error) {
       console.error('❌ Error loading initial data:', error);
+      // Asegurar que al menos tengamos datos de fallback para países
+      if (paises.length === 0) {
+        console.log('🔄 Usando datos de fallback para países...');
+        const fallbackPaises = [
+          { codigo: 'PE', nombre: 'Perú' },
+          { codigo: 'CO', nombre: 'Colombia' },
+          { codigo: 'EC', nombre: 'Ecuador' },
+          { codigo: 'BO', nombre: 'Bolivia' },
+          { codigo: 'MX', nombre: 'México' }
+        ];
+        setPaises(fallbackPaises);
+      }
     } finally {
       setLoading(false);
     }
@@ -126,16 +150,16 @@ const PacientesPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-neutral-900 flex items-center gap-3">
               <Users className="h-8 w-8 text-primary-600" />
-              Gestión de Pacientes
+              Gestión de Pacientes - FORMULARIO COMPLETO
             </h1>
             <p className="mt-2 text-neutral-600">Administra la información de los pacientes de la clínica</p>
             <p className="text-xs text-neutral-400">Actualizado: {new Date().toLocaleTimeString()}</p>
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="btn-primary mt-4 sm:mt-0"
+            className="btn-primary mt-4 sm:mt-0 flex items-center"
           >
-            <Plus className="h-5 w-5 mr-2" />
+            <Plus className="h-4 w-4 mr-2" />
             Nuevo Paciente
           </button>
         </div>
@@ -235,60 +259,60 @@ const PacientesPage: React.FC = () => {
         )}
       </div>
 
-      {/* Modal de Formulario */}
+      {/* Modal de Formulario - Mejorado para móviles */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-neutral-900">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-neutral-900">
                   {editingId ? 'Editar Paciente' : 'Nuevo Paciente'}
                 </h2>
                 <button
                   onClick={resetForm}
-                  className="text-neutral-400 hover:text-neutral-600"
+                  className="text-neutral-400 hover:text-neutral-600 p-1"
                 >
-                  <X className="h-6 w-6" />
+                  <X className="h-5 w-5 sm:h-6 sm:w-6" />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                 {/* Información Personal */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-neutral-800 border-b border-neutral-200 pb-2">
+                <div className="space-y-3 sm:space-y-4">
+                  <h3 className="text-base sm:text-lg font-medium text-neutral-800 border-b border-neutral-200 pb-2">
                     Información Personal
                   </h3>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <label className="form-label">Nombre *</label>
+                      <label className="form-label text-sm sm:text-base">Nombre *</label>
                       <input
                         type="text"
                         value={formData.nombre}
                         onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                        className="form-input"
+                        className="form-input text-sm sm:text-base"
                         required
                       />
                     </div>
                     <div>
-                      <label className="form-label">Apellido *</label>
+                      <label className="form-label text-sm sm:text-base">Apellido *</label>
                       <input
                         type="text"
                         value={formData.apellido}
                         onChange={(e) => setFormData({ ...formData, apellido: e.target.value })}
-                        className="form-input"
+                        className="form-input text-sm sm:text-base"
                         required
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="form-label">Fecha de Nacimiento *</label>
+                    <label className="form-label text-sm sm:text-base">Fecha de Nacimiento *</label>
                     <input
                       type="date"
                       value={formData.fechaNacimiento}
                       onChange={(e) => setFormData({ ...formData, fechaNacimiento: e.target.value })}
-                      className="form-input"
+                      className="form-input text-sm sm:text-base"
                       required
                     />
                   </div>
@@ -397,16 +421,16 @@ const PacientesPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="btn-secondary"
+                    className="btn-secondary flex items-center"
                   >
-                    <X className="h-5 w-5 mr-2" />
+                    <X className="h-4 w-4 mr-2" />
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="btn-primary"
+                    className="btn-primary flex items-center"
                   >
-                    <Save className="h-5 w-5 mr-2" />
+                    <Save className="h-4 w-4 mr-2" />
                     {editingId ? 'Actualizar' : 'Guardar'}
                   </button>
                 </div>

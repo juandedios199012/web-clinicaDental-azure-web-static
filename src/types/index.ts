@@ -56,6 +56,7 @@ export interface Paciente {
   id: string;
   nombre: string;
   apellido: string;
+  fechaNacimiento: string;
   correoElectronico: string;
   numeroTelefono: string;
   pais: string;
@@ -69,6 +70,7 @@ export interface Paciente {
 export interface CreatePacienteForm {
   nombre: string;
   apellido: string;
+  fechaNacimiento: string;
   correoElectronico: string;
   numeroTelefono: string;
   pais: string;

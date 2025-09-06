@@ -7,11 +7,11 @@ import DoctoresPage from './pages/DoctoresPage';
 import ServiciosPage from './pages/ServiciosPage';
 import CitasPage from './pages/CitasPage';
 import AgendarCitaPage from './pages/AgendarCitaPage';
-import PacientesPage from './pages/PacientesPage';
+import PacientesPage from './pages/PacientesPageFixed';
 import ReportesPage from './pages/ReportesPage';
 
-// Navegación principal
-export const navigation = [
+// Navegación principal (inline para evitar problemas de import)
+const navigation = [
   { name: 'Inicio', href: '/', icon: Calendar },
   { name: 'Pacientes', href: '/pacientes', icon: UserPlus },
   { name: 'Doctores', href: '/doctores', icon: Users },

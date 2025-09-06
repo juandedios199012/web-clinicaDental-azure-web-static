@@ -26,6 +26,11 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
   const selectedOption = options.find(option => option.value === value);
 
+  // Debug log para opciones (solo en desarrollo)
+  useEffect(() => {
+    // Logs removidos para producción
+  }, [options, placeholder]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {

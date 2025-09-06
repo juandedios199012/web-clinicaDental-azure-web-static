@@ -31,18 +31,35 @@ const PacientesPage: React.FC = () => {
   const loadInitialData = async () => {
     try {
       console.log('🔄 Iniciando carga de datos iniciales...');
-      const [pacientesData, paisesData] = await Promise.all([
-        apiService.getPacientes(),
-        apiService.getPaises()
-      ]);
       
-      console.log('📦 Pacientes cargados:', pacientesData?.length || 0);
+      // Cargar países primero
+      console.log('📡 Llamando a apiService.getPaises()...');
+      const paisesData = await apiService.getPaises();
       console.log('🌍 Países cargados:', paisesData);
-      
-      setPacientes(pacientesData);
+      console.log('📊 Cantidad de países:', paisesData?.length || 0);
       setPaises(paisesData);
+      
+      // Cargar pacientes
+      console.log('� Llamando a apiService.getPacientes()...');
+      const pacientesData = await apiService.getPacientes();
+      console.log('📦 Pacientes cargados:', pacientesData?.length || 0);
+      setPacientes(pacientesData);
+      
+      console.log('✅ Carga inicial completada');
     } catch (error) {
       console.error('❌ Error loading initial data:', error);
+      // Asegurar que al menos tengamos datos de fallback para países
+      if (paises.length === 0) {
+        console.log('🔄 Usando datos de fallback para países...');
+        const fallbackPaises = [
+          { codigo: 'PE', nombre: 'Perú' },
+          { codigo: 'CO', nombre: 'Colombia' },
+          { codigo: 'EC', nombre: 'Ecuador' },
+          { codigo: 'BO', nombre: 'Bolivia' },
+          { codigo: 'MX', nombre: 'México' }
+        ];
+        setPaises(fallbackPaises);
+      }
     } finally {
       setLoading(false);
     }
@@ -126,16 +143,16 @@ const PacientesPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-neutral-900 flex items-center gap-3">
               <Users className="h-8 w-8 text-primary-600" />
-              Gestión de Pacientes
+              Gestión de Pacientes - FORMULARIO COMPLETO
             </h1>
             <p className="mt-2 text-neutral-600">Administra la información de los pacientes de la clínica</p>
             <p className="text-xs text-neutral-400">Actualizado: {new Date().toLocaleTimeString()}</p>
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="btn-primary mt-4 sm:mt-0"
+            className="btn-primary mt-4 sm:mt-0 flex items-center"
           >
-            <Plus className="h-5 w-5 mr-2" />
+            <Plus className="h-4 w-4 mr-2" />
             Nuevo Paciente
           </button>
         </div>
@@ -397,16 +414,16 @@ const PacientesPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="btn-secondary"
+                    className="btn-secondary flex items-center"
                   >
-                    <X className="h-5 w-5 mr-2" />
+                    <X className="h-4 w-4 mr-2" />
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="btn-primary"
+                    className="btn-primary flex items-center"
                   >
-                    <Save className="h-5 w-5 mr-2" />
+                    <Save className="h-4 w-4 mr-2" />
                     {editingId ? 'Actualizar' : 'Guardar'}
                   </button>
                 </div>

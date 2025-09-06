@@ -77,6 +77,8 @@ const ReportesPage: React.FC = () => {
       ]);
       
       setCitas(citasData);
+      console.log('🧪 Servicios cargados en ReportesPage:', serviciosData);
+      console.log('🧪 Especialidades detectadas:', serviciosData.map(s => ({ nombre: s.nombre, especialidad: s.especialidad })));
       setServicios(serviciosData);
       setSucursales(sucursalesData);
       setLastUpdated(new Date());
@@ -233,7 +235,9 @@ const ReportesPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const especialidades = [...new Set(servicios.map(s => s.especialidad))];
+  const especialidades = [...new Set(servicios.map(s => s.especialidad).filter(Boolean))];
+  console.log('🎯 Especialidades únicas generadas:', especialidades);
+  console.log('🎯 Servicios con especialidad:', servicios.map(s => ({ nombre: s.nombre, especialidad: s.especialidad })));
 
   return (
     <div>
@@ -290,7 +294,10 @@ const ReportesPage: React.FC = () => {
             <CustomSelect
               options={[
                 { value: '', label: 'Todos los servicios' },
-                ...especialidades.map(especialidad => ({ value: especialidad, label: especialidad }))
+                ...(loading ? 
+                  [{ value: 'loading', label: 'Cargando servicios...' }] : 
+                  especialidades.map(especialidad => ({ value: especialidad, label: especialidad }))
+                )
               ]}
               value={filters.tipoServicio}
               onChange={(value) => setFilters({ ...filters, tipoServicio: value })}
