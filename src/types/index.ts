@@ -17,7 +17,7 @@ export interface Servicio {
   id: string;
   type: 'service';
   nombre: string;
-  especialidad: string; // Campo agregado para reportes
+  // especialidad removida - causaba confusión con Doctor.especialidad
   categoria?: string; // Campo opcional para categorización adicional
   duracion: number; // en minutos
   precio: number;

@@ -3,7 +3,6 @@ import { BarChart3, PieChart, TrendingUp, Calendar, Users, DollarSign, Filter, D
 import { apiService } from '../services/api';
 import { Cita, Servicio, Sucursal } from '../types';
 import CustomSelect from '../components/CustomSelect';
-import TestServicios from '../components/TestServicios';
 
 interface ReportFilters {
   sucursal: string;
@@ -88,11 +87,11 @@ const ReportesPage: React.FC = () => {
       setCitas(citasData);
       
       console.log('🧪 [REPORTES] Servicios detallados recibidos:', serviciosData);
-      console.log('🧪 [REPORTES] Especialidades por servicio:', 
+      console.log('🧪 [REPORTES] Servicios disponibles para filtro:', 
         serviciosData?.map(s => ({ 
           id: s.id,
-          nombre: s.nombre, 
-          especialidad: s.especialidad 
+          nombre: s.nombre,
+          precio: s.precio
         })) || []
       );
       
@@ -119,17 +118,17 @@ const ReportesPage: React.FC = () => {
 
     setAppointmentStats({ atendidas, canceladas, total, porcentajeAtendidas });
 
-    // Estadísticas por servicio y especialización
+    // Estadísticas por servicio (simplificado sin especialidades confusas)
     const serviceStatsMap = new Map<string, ServiceStats>();
     
     filteredCitas.forEach(cita => {
       if (cita.estado === 'completada') {
         const servicio = servicios.find(s => s.id === cita.servicioId);
         if (servicio) {
-          const key = `${servicio.nombre}-${servicio.especialidad}`;
+          const key = servicio.nombre;
           const existing = serviceStatsMap.get(key) || {
             servicio: servicio.nombre,
-            especializacion: servicio.especialidad,
+            especializacion: `$${servicio.precio}`, // Mostrar precio en lugar de especialidad
             cantidad: 0,
             ingresos: 0
           };
@@ -184,10 +183,10 @@ const ReportesPage: React.FC = () => {
         return false;
       }
 
-      // Filtro por tipo de servicio
+      // Filtro por tipo de servicio (usar nombre del servicio directamente)
       if (filters.tipoServicio) {
         const servicio = servicios.find(s => s.id === cita.servicioId);
-        if (!servicio || servicio.especialidad !== filters.tipoServicio) {
+        if (!servicio || servicio.nombre !== filters.tipoServicio) {
           return false;
         }
       }
@@ -254,19 +253,8 @@ const ReportesPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const especialidades = [...new Set(servicios.map(s => s.especialidad).filter(Boolean))];
-  console.log('🎯 [REPORTES] Servicios para especialidades:', servicios.map(s => ({ nombre: s.nombre, especialidad: s.especialidad })));
-  console.log('🎯 [REPORTES] Especialidades únicas generadas:', especialidades);
-  console.log('🎯 [REPORTES] Total servicios disponibles:', servicios.length);
-  console.log('🎯 [REPORTES] Total especialidades únicas:', especialidades.length);
-
   return (
     <div>
-      {/* Componente de prueba temporal */}
-      <div className="mb-6">
-        <TestServicios />
-      </div>
-      
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-neutral-900">Dashboard de Reportes</h1>
@@ -322,24 +310,27 @@ const ReportesPage: React.FC = () => {
                 console.log('🔍 [REPORTES-DROPDOWN] Estado actual:', {
                   loading,
                   totalServicios: servicios.length,
-                  totalEspecialidades: especialidades.length,
-                  especialidades
+                  serviciosDisponibles: servicios.map(s => s.nombre)
                 });
                 
                 if (loading) {
                   console.log('🔄 [REPORTES-DROPDOWN] Mostrando loading...');
                   return [{ value: 'loading', label: 'Cargando servicios...' }];
                 } else {
-                  console.log('✅ [REPORTES-DROPDOWN] Mostrando especialidades:', especialidades);
+                  const opcionesServicios = servicios.map(servicio => ({ 
+                    value: servicio.nombre, 
+                    label: servicio.nombre 
+                  }));
+                  console.log('✅ [REPORTES-DROPDOWN] Mostrando servicios directos:', opcionesServicios);
                   return [
                     { value: '', label: 'Todos los servicios' },
-                    ...especialidades.map(especialidad => ({ value: especialidad, label: especialidad }))
+                    ...opcionesServicios
                   ];
                 }
               })()}
               value={filters.tipoServicio}
               onChange={(value) => setFilters({ ...filters, tipoServicio: value })}
-              placeholder="Seleccione tipo"
+              placeholder="Seleccione servicio"
             />
           </div>
 

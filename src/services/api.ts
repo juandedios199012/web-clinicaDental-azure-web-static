@@ -84,31 +84,8 @@ const generateHorarioArray = (inicio: string, fin: string): string[] => {
   return horarios;
 };
 
-// Función helper para mapear especialidades basadas en el nombre del servicio
-const mapearEspecialidad = (nombreServicio: string): string => {
-  const servicioLower = nombreServicio.toLowerCase();
-  
-  if (servicioLower.includes('limpieza') || servicioLower.includes('profilaxis')) {
-    return 'Higiene Dental';
-  } else if (servicioLower.includes('extracción') || servicioLower.includes('cirugía')) {
-    return 'Cirugía Oral';
-  } else if (servicioLower.includes('endodoncia') || servicioLower.includes('conducto')) {
-    return 'Endodoncia';
-  } else if (servicioLower.includes('blanqueamiento') || servicioLower.includes('estética')) {
-    return 'Estética Dental';
-  } else if (servicioLower.includes('ortodoncia') || servicioLower.includes('brackets') || servicioLower.includes('brakers')) {
-    return 'Ortodoncia';
-  } else if (servicioLower.includes('implante') || servicioLower.includes('prótesis')) {
-    return 'Implantología';
-  } else if (servicioLower.includes('periodoncia') || servicioLower.includes('encías')) {
-    return 'Periodoncia';
-  } else {
-    return 'Odontología General';
-  }
-};
-
 export const serviciosApi = {
-  // Obtener todos los servicios con especialidades mapeadas
+  // Obtener todos los servicios (sin mapeo de especialidades confuso)
   getAll: async (): Promise<Servicio[]> => {
     try {
       console.log('🔄 Cargando servicios desde API...');
@@ -127,24 +104,11 @@ export const serviciosApi = {
         return [];
       }
       
-      // Mapear especialidades basadas en el nombre del servicio para reportes
-      const serviciosConEspecialidad = servicios.map((servicio: any) => {
-        const especialidad = mapearEspecialidad(servicio.nombre);
-        console.log(`🎯 Mapeo: "${servicio.nombre}" → Especialidad: "${especialidad}"`);
-        
-        const servicioCompleto = {
-          ...servicio,
-          especialidad
-        };
-        
-        console.log('📄 Servicio completo:', servicioCompleto);
-        return servicioCompleto;
-      });
+      // Devolver servicios tal como vienen del API (sin mapeo artificial de especialidades)
+      console.log('✅ Total servicios procesados:', servicios.length);
+      console.log('✅ Servicios disponibles:', servicios.map(s => ({ nombre: s.nombre, precio: s.precio })));
       
-      console.log('✅ Total servicios procesados:', serviciosConEspecialidad.length);
-      console.log('✅ Servicios finales con especialidades:', serviciosConEspecialidad);
-      
-      return serviciosConEspecialidad;
+      return servicios;
     } catch (error) {
       console.error('❌ Error completo al obtener servicios:', {
         message: error instanceof Error ? error.message : 'Error desconocido',
@@ -158,11 +122,7 @@ export const serviciosApi = {
 
   // Crear un nuevo servicio
   create: async (servicio: CreateServicioForm): Promise<Servicio> => {
-    const servicioConEspecialidad = {
-      ...servicio,
-      especialidad: mapearEspecialidad(servicio.nombre)
-    };
-    const response = await apiClient.post('/services', servicioConEspecialidad);
+    const response = await apiClient.post('/services', servicio);
     return response.data;
   },
 };
