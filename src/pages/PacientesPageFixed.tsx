@@ -109,17 +109,26 @@ const PacientesPage: React.FC = () => {
     }
 
     try {
+      setLoading(true);
+      
       if (editingId) {
         await apiService.updatePaciente(editingId, formData);
+        alert('Paciente actualizado exitosamente');
       } else {
         await apiService.createPaciente(formData);
+        alert('Paciente creado exitosamente');
       }
       
       await loadInitialData();
       resetForm();
     } catch (error) {
       console.error('Error saving patient:', error);
-      alert('Error al guardar el paciente');
+      const errorMessage = editingId 
+        ? 'Error al actualizar el paciente. Por favor, verifique los datos e inténtelo de nuevo.'
+        : 'Error al crear el paciente. Por favor, verifique los datos e inténtelo de nuevo.';
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -138,6 +147,56 @@ const PacientesPage: React.FC = () => {
     setEditingId(null);
     setShowForm(false);
     setCiudades([]);
+  };
+
+  const handleEdit = async (paciente: Paciente) => {
+    try {
+      // Cargar los datos del paciente en el formulario
+      setFormData({
+        nombre: paciente.nombre,
+        apellido: paciente.apellido,
+        fechaNacimiento: paciente.fechaNacimiento,
+        correoElectronico: paciente.correoElectronico,
+        numeroTelefono: paciente.numeroTelefono,
+        pais: paciente.pais,
+        ciudad: paciente.ciudad,
+        direccion: paciente.direccion,
+        aceptaPoliticas: true // Asumimos que ya aceptó las políticas
+      });
+      
+      // Cargar ciudades del país del paciente
+      if (paciente.pais) {
+        console.log('🏙️ Cargando ciudades para país:', paciente.pais);
+        const ciudadesData = await apiService.getCiudades(paciente.pais);
+        setCiudades(ciudadesData);
+      }
+      
+      setEditingId(paciente.id);
+      setShowForm(true);
+    } catch (error) {
+      console.error('Error loading patient data:', error);
+      alert('Error al cargar los datos del paciente');
+    }
+  };
+
+  const handleDelete = async (pacienteId: string, nombreCompleto: string) => {
+    const confirmed = window.confirm(
+      `¿Está seguro que desea eliminar al paciente "${nombreCompleto}"?\n\nEsta acción no se puede deshacer.`
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      setLoading(true);
+      await apiService.deletePaciente(pacienteId);
+      await loadInitialData(); // Recargar la lista de pacientes
+      alert('Paciente eliminado exitosamente');
+    } catch (error) {
+      console.error('Error deleting patient:', error);
+      alert('Error al eliminar el paciente. Por favor, inténtelo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredPacientes = pacientes.filter(paciente =>
@@ -167,13 +226,25 @@ const PacientesPage: React.FC = () => {
             <p className="mt-2 text-neutral-600">Administra la información de los pacientes de la clínica</p>
             <p className="text-xs text-neutral-400">Actualizado: {new Date().toLocaleTimeString()}</p>
           </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="btn-primary mt-4 sm:mt-0 flex items-center"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nuevo Paciente
-          </button>
+          <div className="flex space-x-3">
+            {editingId && (
+              <button
+                onClick={resetForm}
+                className="btn-secondary mt-4 sm:mt-0 flex items-center"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancelar Edición
+              </button>
+            )}
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn-primary mt-4 sm:mt-0 flex items-center"
+              disabled={editingId !== null && showForm}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo Paciente
+            </button>
+          </div>
         </div>
       </div>
 
@@ -221,7 +292,14 @@ const PacientesPage: React.FC = () => {
               </thead>
               <tbody className="bg-white divide-y divide-neutral-200">
                 {filteredPacientes.map((paciente) => (
-                  <tr key={paciente.id} className="hover:bg-neutral-50">
+                  <tr 
+                    key={paciente.id} 
+                    className={`hover:bg-neutral-50 ${
+                      editingId === paciente.id 
+                        ? 'bg-primary-50 border-l-4 border-primary-500' 
+                        : ''
+                    }`}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
@@ -250,14 +328,16 @@ const PacientesPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => {/* handleEdit(paciente) */}}
-                          className="text-primary-600 hover:text-primary-800"
+                          onClick={() => handleEdit(paciente)}
+                          className="text-primary-600 hover:text-primary-800 p-1 rounded-md hover:bg-primary-50 transition-colors"
+                          title="Editar paciente"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => {/* handleDelete(paciente.id) */}}
-                          className="text-red-600 hover:text-red-800"
+                          onClick={() => handleDelete(paciente.id, `${paciente.nombre} ${paciente.apellido}`)}
+                          className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50 transition-colors"
+                          title="Eliminar paciente"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
