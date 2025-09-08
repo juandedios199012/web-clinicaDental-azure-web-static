@@ -16,9 +16,27 @@ const BirthDateSelector: React.FC<BirthDateSelectorProps> = ({
 }) => {
   // Parsear la fecha actual y mantener estado interno
   const parseDate = (dateString: string) => {
-    if (!dateString) return { day: '', month: '', year: '' };
-    const [year, month, day] = dateString.split('-');
-    return { day: day || '', month: month || '', year: year || '' };
+    // Manejo defensivo para valores null, undefined o vacíos
+    if (!dateString || typeof dateString !== 'string') {
+      return { day: '', month: '', year: '' };
+    }
+    
+    try {
+      const parts = dateString.split('-');
+      if (parts.length !== 3) {
+        return { day: '', month: '', year: '' };
+      }
+      
+      const [year, month, day] = parts;
+      return { 
+        day: day || '', 
+        month: month || '', 
+        year: year || '' 
+      };
+    } catch (error) {
+      console.warn('Error parsing date string:', dateString, error);
+      return { day: '', month: '', year: '' };
+    }
   };
 
   const [internalDate, setInternalDate] = useState(() => parseDate(value));

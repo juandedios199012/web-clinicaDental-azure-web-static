@@ -11,11 +11,12 @@ const CitasPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
+  const [showAllAppointments, setShowAllAppointments] = useState(false);
 
   useEffect(() => {
     loadCitas();
     loadServicios();
-  }, [dateFilter]);
+  }, [dateFilter, showAllAppointments]);
 
   const loadServicios = async () => {
     try {
@@ -29,7 +30,7 @@ const CitasPage: React.FC = () => {
   const loadCitas = async () => {
     try {
       const filters: any = {};
-      if (dateFilter) {
+      if (!showAllAppointments && dateFilter) {
         filters.fecha = dateFilter;
       }
       const data = await apiService.getCitas(filters);
@@ -110,7 +111,7 @@ const CitasPage: React.FC = () => {
 
       {/* Filtros */}
       <div className="card mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400 h-5 w-5" />
             <input
@@ -127,8 +128,24 @@ const CitasPage: React.FC = () => {
               type="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              disabled={showAllAppointments}
+              className={`w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                showAllAppointments ? 'bg-neutral-100 cursor-not-allowed' : ''
+              }`}
             />
+          </div>
+          <div className="flex items-center">
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showAllAppointments}
+                onChange={(e) => setShowAllAppointments(e.target.checked)}
+                className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+              />
+              <span className="ml-2 text-sm font-medium text-neutral-700">
+                Mostrar todas las citas
+              </span>
+            </label>
           </div>
         </div>
       </div>
@@ -201,7 +218,12 @@ const CitasPage: React.FC = () => {
           <Calendar className="h-16 w-16 text-neutral-300 mx-auto mb-4" />
           <p className="text-neutral-500 text-lg">No se encontraron citas</p>
           <p className="text-neutral-400 text-sm mt-1">
-            {dateFilter ? `para la fecha ${new Date(dateFilter + 'T00:00:00').toLocaleDateString('es-PE')}` : ''}
+            {showAllAppointments 
+              ? 'No hay citas registradas en el sistema'
+              : dateFilter 
+                ? `para la fecha ${new Date(dateFilter + 'T00:00:00').toLocaleDateString('es-PE')}` 
+                : ''
+            }
           </p>
         </div>
       )}

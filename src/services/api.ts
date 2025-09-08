@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Doctor, Servicio, Cita, Disponibilidad, CreateDoctorForm, CreateServicioForm, CreateCitaForm, Paciente, CreatePacienteForm, Pais, Ciudad, Sucursal } from '../types';
+import type { Doctor, Servicio, Cita, Disponibilidad, CreateDoctorForm, CreateServicioForm, CreateCitaForm, Paciente, CreatePacienteForm, Pais, Ciudad, Sucursal, ReportResponse, ReportFilters } from '../types';
 
 // URL base del API - usar API real siempre
 const API_BASE_URL = 'https://clinicadentalfunctions-aeezbtb0gva9fhbn.canadacentral-01.azurewebsites.net/api';
@@ -284,6 +284,42 @@ const getCiudadesFallback = (pais: string): Ciudad[] => {
   return ciudadesPorPais[pais] || [];
 };
 
+export const reportesApi = {
+  // Obtener reportes del dashboard
+  getReports: async (filters?: ReportFilters): Promise<ReportResponse> => {
+    try {
+      console.log('📊 [REPORTES-API] Obteniendo reportes con filtros:', filters);
+      
+      // Construir parámetros de consulta
+      const params = new URLSearchParams();
+      if (filters?.sucursalId) params.append('sucursalId', filters.sucursalId);
+      if (filters?.servicioId) params.append('servicioId', filters.servicioId);
+      if (filters?.publicoObjetivo) params.append('publicoObjetivo', filters.publicoObjetivo);
+      if (filters?.fechaInicio) params.append('fechaInicio', filters.fechaInicio);
+      if (filters?.fechaFin) params.append('fechaFin', filters.fechaFin);
+      
+      const queryString = params.toString();
+      const url = queryString ? `/reports?${queryString}` : '/reports';
+      
+      console.log('🔗 [REPORTES-API] URL construida:', url);
+      
+      const response = await apiClient.get(url);
+      
+      console.log('✅ [REPORTES-API] Respuesta recibida:', {
+        status: response.status,
+        totalCitas: response.data?.metricas?.totalCitas,
+        citasAtendidas: response.data?.metricas?.citasAtendidas,
+        citasCanceladas: response.data?.metricas?.citasCanceladas
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('❌ [REPORTES-API] Error al obtener reportes:', error);
+      throw error;
+    }
+  }
+};
+
 export const disponibilidadApi = {
   // Obtener disponibilidad por doctor y fecha
   get: async (doctorId: string, fecha: string): Promise<Disponibilidad> => {
@@ -319,6 +355,9 @@ export const apiService = {
   getPaises: configuracionApi.getPaises,
   getCiudades: configuracionApi.getCiudades,
   getSucursales: configuracionApi.getSucursales,
+  
+  // Reportes
+  getReports: reportesApi.getReports,
   
   // Disponibilidad
   getDisponibilidad: disponibilidadApi.get,

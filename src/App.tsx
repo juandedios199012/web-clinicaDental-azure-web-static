@@ -7,7 +7,7 @@ import DoctoresPage from './pages/DoctoresPage';
 import ServiciosPage from './pages/ServiciosPage';
 import CitasPage from './pages/CitasPage';
 import AgendarCitaPage from './pages/AgendarCitaPage';
-import PacientesPage from './pages/PacientesPageFixed';
+import PacientesPage from './pages/PacientesPage';
 import ReportesPage from './pages/ReportesPage';
 
 // Navegación principal (inline para evitar problemas de import)

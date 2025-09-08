@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Plus, Search, Edit2, Trash2, Save, X } from 'lucide-react';
 import { apiService } from '../services/api';
 import CustomSelect from '../components/CustomSelect';
+import BirthDateSelector from '../components/BirthDateSelector';
 import type { Paciente, CreatePacienteForm, Pais, Ciudad } from '../types';
 
 const PacientesPage: React.FC = () => {
@@ -31,32 +32,83 @@ const PacientesPage: React.FC = () => {
   const loadInitialData = async () => {
     try {
       console.log('🔄 Iniciando carga de datos iniciales...');
-      const [pacientesData, paisesData] = await Promise.all([
-        apiService.getPacientes(),
-        apiService.getPaises()
-      ]);
       
+      // Consultar API optimizada
+      console.log('📡 Consultando API de países...');
+      const paisesFromAPI = await apiService.getPaises();
+      console.log('🌍 Países recibidos desde API:', paisesFromAPI);
+      console.log('📊 Cantidad de países:', paisesFromAPI?.length || 0);
+      
+      if (paisesFromAPI && paisesFromAPI.length > 0) {
+        console.log('✅ API funcionó correctamente, usando sus datos');
+        console.log('📋 Lista completa de países recibidos:');
+        paisesFromAPI.forEach((pais, index) => {
+          console.log(`${index + 1}. ${pais.codigo}: ${pais.nombre}`);
+        });
+        setPaises(paisesFromAPI);
+      } else {
+        console.error('❌ API devolvió array vacío o nulo');
+        setPaises([]);
+      }
+      
+      // Cargar pacientes
+      console.log('👥 Llamando a apiService.getPacientes()...');
+      const pacientesData = await apiService.getPacientes();
       console.log('📦 Pacientes cargados:', pacientesData?.length || 0);
-      console.log('🌍 Países cargados:', paisesData);
       
-      setPacientes(pacientesData);
-      setPaises(paisesData);
+      // Filtrar y limpiar pacientes con datos faltantes
+      const pacientesLimpios = (pacientesData || []).map(paciente => ({
+        ...paciente,
+        // Asegurar que todos los campos requeridos existan
+        nombre: paciente.nombre || '',
+        apellido: paciente.apellido || '',
+        fechaNacimiento: paciente.fechaNacimiento || '',
+        correoElectronico: paciente.correoElectronico || '',
+        numeroTelefono: paciente.numeroTelefono || '',
+        pais: paciente.pais || '',
+        ciudad: paciente.ciudad || '',
+        direccion: paciente.direccion || ''
+      }));
+      
+      setPacientes(pacientesLimpios);
+      
+      console.log('✅ Carga inicial completada');
     } catch (error) {
       console.error('❌ Error loading initial data:', error);
+      console.error('🔍 Detalles del error:', error instanceof Error ? error.message : 'Error desconocido');
+      // NO usar fallback - el error debe ser visible
+      setPaises([]);
+      setPacientes([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handlePaisChange = async (paisCodigo: string) => {
+    console.log('🌍 País seleccionado:', paisCodigo);
     setFormData({ ...formData, pais: paisCodigo, ciudad: '' });
     
     if (paisCodigo) {
       try {
+        console.log('🔄 Cargando ciudades para:', paisCodigo);
         const ciudadesData = await apiService.getCiudades(paisCodigo);
+        console.log('🏙️ Ciudades cargadas (tipo):', typeof ciudadesData);
+        console.log('🏙️ Ciudades cargadas (datos):', ciudadesData);
+        console.log('🏙️ Cantidad de ciudades:', ciudadesData?.length || 0);
+        
+        if (ciudadesData && ciudadesData.length > 0) {
+          ciudadesData.forEach((ciudad, index) => {
+            console.log(`🏙️ Ciudad ${index + 1}:`, {
+              codigo: ciudad.codigo,
+              nombre: ciudad.nombre,
+              pais: ciudad.pais
+            });
+          });
+        }
+        
         setCiudades(ciudadesData);
       } catch (error) {
-        console.error('Error loading cities:', error);
+        console.error('❌ Error loading cities:', error);
         setCiudades([]);
       }
     } else {
@@ -73,17 +125,52 @@ const PacientesPage: React.FC = () => {
     }
 
     try {
+      setLoading(true);
+      
       if (editingId) {
         await apiService.updatePaciente(editingId, formData);
+        alert('Paciente actualizado exitosamente');
       } else {
         await apiService.createPaciente(formData);
+        alert('Paciente creado exitosamente');
       }
       
       await loadInitialData();
       resetForm();
     } catch (error) {
       console.error('Error saving patient:', error);
-      alert('Error al guardar el paciente');
+      
+      // Manejo específico de errores
+      let errorMessage = '';
+      
+      if (error instanceof Error && 'response' in error) {
+        const axiosError = error as any;
+        const status = axiosError.response?.status;
+        
+        switch (status) {
+          case 409:
+            errorMessage = `❌ Error: El correo electrónico "${formData.correoElectronico}" ya está registrado.\n\nPor favor, use un correo electrónico diferente.`;
+            break;
+          case 400:
+            errorMessage = '❌ Error: Los datos ingresados son inválidos. Por favor, verifique la información e inténtelo de nuevo.';
+            break;
+          case 500:
+            errorMessage = '❌ Error del servidor. Por favor, inténtelo de nuevo en unos momentos.';
+            break;
+          default:
+            errorMessage = editingId 
+              ? '❌ Error al actualizar el paciente. Por favor, verifique los datos e inténtelo de nuevo.'
+              : '❌ Error al crear el paciente. Por favor, verifique los datos e inténtelo de nuevo.';
+        }
+      } else {
+        errorMessage = editingId 
+          ? '❌ Error al actualizar el paciente. Por favor, verifique los datos e inténtelo de nuevo.'
+          : '❌ Error al crear el paciente. Por favor, verifique los datos e inténtelo de nuevo.';
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -102,6 +189,81 @@ const PacientesPage: React.FC = () => {
     setEditingId(null);
     setShowForm(false);
     setCiudades([]);
+  };
+
+  const handleEdit = async (paciente: Paciente) => {
+    try {
+      // Cargar los datos del paciente en el formulario
+      setFormData({
+        nombre: paciente.nombre || '',
+        apellido: paciente.apellido || '',
+        fechaNacimiento: paciente.fechaNacimiento || '',
+        correoElectronico: paciente.correoElectronico || '',
+        numeroTelefono: paciente.numeroTelefono || '',
+        pais: paciente.pais || '',
+        ciudad: paciente.ciudad || '',
+        direccion: paciente.direccion || '',
+        aceptaPoliticas: true // Asumimos que ya aceptó las políticas
+      });
+      
+      // Cargar ciudades del país del paciente
+      if (paciente.pais) {
+        console.log('🏙️ Cargando ciudades para país:', paciente.pais);
+        const ciudadesData = await apiService.getCiudades(paciente.pais);
+        setCiudades(ciudadesData);
+      }
+      
+      setEditingId(paciente.id);
+      setShowForm(true);
+    } catch (error) {
+      console.error('Error loading patient data:', error);
+      alert('Error al cargar los datos del paciente');
+    }
+  };
+
+  const handleDelete = async (pacienteId: string, nombreCompleto: string) => {
+    const confirmed = window.confirm(
+      `¿Está seguro que desea eliminar al paciente "${nombreCompleto}"?\n\nEsta acción no se puede deshacer.`
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      setLoading(true);
+      await apiService.deletePaciente(pacienteId);
+      await loadInitialData(); // Recargar la lista de pacientes
+      alert('Paciente eliminado exitosamente');
+    } catch (error) {
+      console.error('Error deleting patient:', error);
+      
+      // Manejo específico de errores para eliminación
+      let errorMessage = '';
+      
+      if (error instanceof Error && 'response' in error) {
+        const axiosError = error as any;
+        const status = axiosError.response?.status;
+        
+        switch (status) {
+          case 404:
+            errorMessage = '❌ Error: El paciente no existe o ya fue eliminado.';
+            break;
+          case 400:
+            errorMessage = '❌ Error: No se puede eliminar el paciente porque tiene citas programadas.';
+            break;
+          case 500:
+            errorMessage = '❌ Error del servidor. Por favor, inténtelo de nuevo en unos momentos.';
+            break;
+          default:
+            errorMessage = '❌ Error al eliminar el paciente. Por favor, inténtelo de nuevo.';
+        }
+      } else {
+        errorMessage = '❌ Error al eliminar el paciente. Por favor, inténtelo de nuevo.';
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredPacientes = pacientes.filter(paciente =>
@@ -126,18 +288,30 @@ const PacientesPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-neutral-900 flex items-center gap-3">
               <Users className="h-8 w-8 text-primary-600" />
-              Gestión de Pacientes
+              Gestión de Pacientes - FORMULARIO COMPLETO
             </h1>
             <p className="mt-2 text-neutral-600">Administra la información de los pacientes de la clínica</p>
             <p className="text-xs text-neutral-400">Actualizado: {new Date().toLocaleTimeString()}</p>
           </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="btn-primary mt-4 sm:mt-0"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Nuevo Paciente
-          </button>
+          <div className="flex space-x-3">
+            {editingId && (
+              <button
+                onClick={resetForm}
+                className="btn-secondary mt-4 sm:mt-0 flex items-center"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancelar Edición
+              </button>
+            )}
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn-primary mt-4 sm:mt-0 flex items-center"
+              disabled={editingId !== null && showForm}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo Paciente
+            </button>
+          </div>
         </div>
       </div>
 
@@ -185,7 +359,14 @@ const PacientesPage: React.FC = () => {
               </thead>
               <tbody className="bg-white divide-y divide-neutral-200">
                 {filteredPacientes.map((paciente) => (
-                  <tr key={paciente.id} className="hover:bg-neutral-50">
+                  <tr 
+                    key={paciente.id} 
+                    className={`hover:bg-neutral-50 ${
+                      editingId === paciente.id 
+                        ? 'bg-primary-50 border-l-4 border-primary-500' 
+                        : ''
+                    }`}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
@@ -209,19 +390,52 @@ const PacientesPage: React.FC = () => {
                       <div className="text-sm text-neutral-500">{paciente.pais}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
-                      {new Date(paciente.fechaNacimiento).toLocaleDateString()}
+                      {(() => {
+                        // Validar que existe la fecha de nacimiento
+                        if (!paciente.fechaNacimiento) {
+                          return <span className="text-neutral-400 italic">Sin fecha</span>;
+                        }
+                        
+                        try {
+                          // Parsear fecha correctamente evitando problemas de zona horaria
+                          const [year, month, day] = paciente.fechaNacimiento.split('-');
+                          
+                          // Validar que tenemos todos los componentes
+                          if (!year || !month || !day) {
+                            return <span className="text-neutral-400 italic">Fecha inválida</span>;
+                          }
+                          
+                          const fecha = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                          
+                          // Validar que la fecha es válida
+                          if (isNaN(fecha.getTime())) {
+                            return <span className="text-neutral-400 italic">Fecha inválida</span>;
+                          }
+                          
+                          return fecha.toLocaleDateString('es-ES', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          });
+                        } catch (error) {
+                          console.warn('Error parsing birth date for patient:', paciente.id, error);
+                          return <span className="text-neutral-400 italic">Fecha inválida</span>;
+                        }
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => {/* handleEdit(paciente) */}}
-                          className="text-primary-600 hover:text-primary-800"
+                          onClick={() => handleEdit(paciente)}
+                          className="text-primary-600 hover:text-primary-800 p-1 rounded-md hover:bg-primary-50 transition-colors"
+                          title="Editar paciente"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => {/* handleDelete(paciente.id) */}}
-                          className="text-red-600 hover:text-red-800"
+                          onClick={() => handleDelete(paciente.id, `${paciente.nombre} ${paciente.apellido}`)}
+                          className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50 transition-colors"
+                          title="Eliminar paciente"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -235,61 +449,60 @@ const PacientesPage: React.FC = () => {
         )}
       </div>
 
-      {/* Modal de Formulario */}
+      {/* Modal de Formulario - Mejorado para móviles */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-neutral-900">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-neutral-900">
                   {editingId ? 'Editar Paciente' : 'Nuevo Paciente'}
                 </h2>
                 <button
                   onClick={resetForm}
-                  className="text-neutral-400 hover:text-neutral-600"
+                  className="text-neutral-400 hover:text-neutral-600 p-1"
                 >
-                  <X className="h-6 w-6" />
+                  <X className="h-5 w-5 sm:h-6 sm:w-6" />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                 {/* Información Personal */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-neutral-800 border-b border-neutral-200 pb-2">
+                <div className="space-y-3 sm:space-y-4">
+                  <h3 className="text-base sm:text-lg font-medium text-neutral-800 border-b border-neutral-200 pb-2">
                     Información Personal
                   </h3>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <label className="form-label">Nombre *</label>
+                      <label className="form-label text-sm sm:text-base">Nombre *</label>
                       <input
                         type="text"
                         value={formData.nombre}
                         onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                        className="form-input"
+                        className="form-input text-sm sm:text-base"
                         required
                       />
                     </div>
                     <div>
-                      <label className="form-label">Apellido *</label>
+                      <label className="form-label text-sm sm:text-base">Apellido *</label>
                       <input
                         type="text"
                         value={formData.apellido}
                         onChange={(e) => setFormData({ ...formData, apellido: e.target.value })}
-                        className="form-input"
+                        className="form-input text-sm sm:text-base"
                         required
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="form-label">Fecha de Nacimiento *</label>
-                    <input
-                      type="date"
+                    <label className="form-label text-sm sm:text-base">Fecha de Nacimiento *</label>
+                    <BirthDateSelector
                       value={formData.fechaNacimiento}
-                      onChange={(e) => setFormData({ ...formData, fechaNacimiento: e.target.value })}
-                      className="form-input"
+                      onChange={(date) => setFormData({ ...formData, fechaNacimiento: date })}
                       required
+                      className="mt-1"
                     />
                   </div>
                 </div>
@@ -334,7 +547,10 @@ const PacientesPage: React.FC = () => {
                     <div>
                       <label className="form-label">País *</label>
                       <CustomSelect
-                        options={paises.map(pais => ({ value: pais.codigo, label: pais.nombre }))}
+                        options={(() => {
+                          console.log('🔍 RENDER: Países disponibles para dropdown:', paises.length, paises);
+                          return paises.map(pais => ({ value: pais.nombre, label: pais.nombre }));
+                        })()}
                         value={formData.pais}
                         onChange={handlePaisChange}
                         placeholder="Seleccione un país"
@@ -344,7 +560,14 @@ const PacientesPage: React.FC = () => {
                     <div>
                       <label className="form-label">Ciudad *</label>
                       <CustomSelect
-                        options={ciudades.map(ciudad => ({ value: ciudad.codigo, label: ciudad.nombre }))}
+                        options={(() => {
+                          console.log('🔍 RENDER: Ciudades disponibles para dropdown:', ciudades.length);
+                          console.log('🔍 RENDER: Ciudades data:', ciudades);
+                          return ciudades.map(ciudad => ({ 
+                            value: ciudad.codigo, 
+                            label: ciudad.nombre 
+                          }));
+                        })()}
                         value={formData.ciudad}
                         onChange={(value) => setFormData({ ...formData, ciudad: value })}
                         placeholder={
@@ -397,16 +620,16 @@ const PacientesPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="btn-secondary"
+                    className="btn-secondary flex items-center"
                   >
-                    <X className="h-5 w-5 mr-2" />
+                    <X className="h-4 w-4 mr-2" />
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="btn-primary"
+                    className="btn-primary flex items-center"
                   >
-                    <Save className="h-5 w-5 mr-2" />
+                    <Save className="h-4 w-4 mr-2" />
                     {editingId ? 'Actualizar' : 'Guardar'}
                   </button>
                 </div>

@@ -133,3 +133,61 @@ export interface CreateCitaForm {
   sucursalId: string; // Campo requerido para la nueva API
   notas?: string;
 }
+
+// Tipos para el API de reportes
+export interface ReportMetricas {
+  totalCitas: number;
+  citasAtendidas: number;
+  citasCanceladas: number;
+  citasConfirmadas: number;
+  citasNoAsistio: number;
+  ingresosTotales: number;
+  ingresoPromedioPorCita: number;
+  tasaCitasCompletadas: number;
+  porcentajeAtendidas: number;
+  porcentajeCanceladas: number;
+}
+
+export interface ProcedimientoPorEspecializacion {
+  servicio: string;
+  especializacion: string;
+  cantidad: number;
+  ingresos: number;
+}
+
+export interface TendenciaMensual {
+  mes: string;
+  atendidas: number;
+  canceladas: number;
+  noAsistio: number;
+  ingresos: number;
+  total: number;
+  tasaExito: number;
+}
+
+export interface FiltrosAplicados {
+  sucursalId: string;
+  servicioId: string;
+  publicoObjetivo: string;
+  fechaInicio: string;
+  fechaFin: string;
+  totalFiltrado: number;
+  totalSinFiltros: number;
+}
+
+export interface ReportResponse {
+  metricas: ReportMetricas;
+  procedimientosPorEspecializacion: ProcedimientoPorEspecializacion[];
+  tendenciasMensuales: TendenciaMensual[];
+  citasAtendidas: Cita[];
+  citasCanceladas: Cita[];
+  filtrosAplicados: FiltrosAplicados;
+}
+
+export interface ReportFilters {
+  sucursalId?: string;
+  servicioId?: string;
+  publicoObjetivo?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+}
