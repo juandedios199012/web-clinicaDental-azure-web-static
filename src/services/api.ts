@@ -201,7 +201,7 @@ export const configuracionApi = {
     }
   },
 
-  // Obtener ciudades por país - usando endpoint real
+  // Obtener ciudades por país - adaptado para respuesta de strings
   getCiudades: async (pais: string): Promise<Ciudad[]> => {
     try {
       console.log('🏙️ Solicitando ciudades para país:', pais);
@@ -209,12 +209,25 @@ export const configuracionApi = {
       console.log('🌐 URL construida:', url);
       
       const response = await apiClient.get(url);
-      console.log('📍 Ciudades recibidas:', response.data);
-      return response.data;
+      console.log('📍 Respuesta cruda del API:', response.data);
+      
+      // El API devuelve array de strings, convertir a objetos Ciudad
+      if (Array.isArray(response.data)) {
+        const ciudadesConvertidas = response.data.map((nombreCiudad: string) => ({
+          codigo: nombreCiudad.toLowerCase().replace(/\s+/g, '_'), // "Buenos Aires" -> "buenos_aires"
+          nombre: nombreCiudad,
+          pais: pais
+        }));
+        
+        console.log('🏙️ Ciudades convertidas a objetos:', ciudadesConvertidas);
+        return ciudadesConvertidas;
+      } else {
+        console.warn('⚠️ Respuesta no es array, usando fallback');
+        return getCiudadesFallback(pais);
+      }
     } catch (error) {
       console.error('❌ Error al obtener ciudades:', error);
       console.log('🔄 Usando fallback para país:', pais);
-      // Fallback con ciudades según el país
       return getCiudadesFallback(pais);
     }
   },

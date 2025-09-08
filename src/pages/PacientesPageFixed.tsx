@@ -76,7 +76,20 @@ const PacientesPage: React.FC = () => {
       try {
         console.log('🔄 Cargando ciudades para:', paisCodigo);
         const ciudadesData = await apiService.getCiudades(paisCodigo);
-        console.log('🏙️ Ciudades cargadas:', ciudadesData);
+        console.log('🏙️ Ciudades cargadas (tipo):', typeof ciudadesData);
+        console.log('🏙️ Ciudades cargadas (datos):', ciudadesData);
+        console.log('🏙️ Cantidad de ciudades:', ciudadesData?.length || 0);
+        
+        if (ciudadesData && ciudadesData.length > 0) {
+          ciudadesData.forEach((ciudad, index) => {
+            console.log(`🏙️ Ciudad ${index + 1}:`, {
+              codigo: ciudad.codigo,
+              nombre: ciudad.nombre,
+              pais: ciudad.pais
+            });
+          });
+        }
+        
         setCiudades(ciudadesData);
       } catch (error) {
         console.error('❌ Error loading cities:', error);
@@ -370,7 +383,14 @@ const PacientesPage: React.FC = () => {
                     <div>
                       <label className="form-label">Ciudad *</label>
                       <CustomSelect
-                        options={ciudades.map(ciudad => ({ value: ciudad.codigo, label: ciudad.nombre }))}
+                        options={(() => {
+                          console.log('🔍 RENDER: Ciudades disponibles para dropdown:', ciudades.length);
+                          console.log('🔍 RENDER: Ciudades data:', ciudades);
+                          return ciudades.map(ciudad => ({ 
+                            value: ciudad.codigo, 
+                            label: ciudad.nombre 
+                          }));
+                        })()}
                         value={formData.ciudad}
                         onChange={(value) => setFormData({ ...formData, ciudad: value })}
                         placeholder={
