@@ -306,7 +306,7 @@ const ReportesPage: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-center text-xs text-neutral-500">
                     <span>{stat.especializacion}</span>
-                    <span>S/ {stat.ingresos.toLocaleString()}</span>
+                    <span>S/ {(stat.ingresos || 0).toLocaleString()}</span>
                   </div>
                   <div className="w-full bg-neutral-200 rounded-full h-2 mt-2">
                     <div 
@@ -354,7 +354,7 @@ const ReportesPage: React.FC = () => {
                 <h4 className="font-medium text-neutral-800 mb-2">Especialización más Rentable</h4>
                 <p className="text-lg font-bold text-medical-blue">{reportData.procedimientosPorEspecializacion[0].especializacion}</p>
                 <p className="text-sm text-neutral-600">
-                  {reportData.procedimientosPorEspecializacion[0].cantidad} procedimientos - S/ {reportData.procedimientosPorEspecializacion[0].ingresos.toLocaleString()}
+                  {reportData.procedimientosPorEspecializacion[0].cantidad} procedimientos - S/ {(reportData.procedimientosPorEspecializacion[0].ingresos || 0).toLocaleString()}
                 </p>
               </div>
             )}
@@ -398,7 +398,7 @@ const ReportesPage: React.FC = () => {
                       <td className="py-3 px-4 text-right text-medical-green font-medium">{stat.atendidas}</td>
                       <td className="py-3 px-4 text-right text-red-600">{stat.canceladas}</td>
                       <td className="py-3 px-4 text-right text-orange-600">{stat.noAsistio}</td>
-                      <td className="py-3 px-4 text-right font-medium">S/ {stat.ingresos.toLocaleString()}</td>
+                      <td className="py-3 px-4 text-right font-medium">S/ {(stat.ingresos || 0).toLocaleString()}</td>
                       <td className="py-3 px-4 text-right">
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                           stat.tasaExito >= 80 ? 'bg-green-100 text-green-800' :

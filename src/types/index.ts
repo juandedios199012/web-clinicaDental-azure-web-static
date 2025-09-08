@@ -36,7 +36,7 @@ export interface Cita {
   especialidad: string;
   fecha: string; // YYYY-MM-DD
   hora: string; // HH:mm
-  estado: 'confirmada' | 'pendiente' | 'cancelada' | 'completada';
+  estado: 'confirmada' | 'pendiente' | 'cancelada' | 'atendida' | 'completada';
   notas?: string;
   createdAt: string;
 }

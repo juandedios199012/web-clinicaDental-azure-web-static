@@ -73,8 +73,8 @@ const CitasPage: React.FC = () => {
       setLoading(true);
       console.log('🩺 Atendiendo cita:', citaId);
       
-      // Actualizar el estado de la cita a 'completada'
-      await apiService.updateCitaEstado(citaId, 'completada');
+      // Actualizar el estado de la cita a 'atendida'
+      await apiService.updateCitaEstado(citaId, 'atendida');
       
       // Recargar la lista de citas
       await loadCitas();
@@ -164,6 +164,7 @@ const CitasPage: React.FC = () => {
         return 'bg-yellow-500 text-white';
       case 'cancelada':
         return 'bg-red-500 text-white';
+      case 'atendida':
       case 'completada':
         return 'bg-medical-blue text-white';
       default:
@@ -322,7 +323,7 @@ const CitasPage: React.FC = () => {
                 )}
                 
                 {/* Estados finales - Solo mostrar información */}
-                {cita.estado === 'completada' && (
+                {(cita.estado === 'atendida' || cita.estado === 'completada') && (
                   <span className="text-green-600 text-sm font-medium">
                     ✅ Atendida
                   </span>
