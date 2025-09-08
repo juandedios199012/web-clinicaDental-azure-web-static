@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Plus, Search, Edit2, Trash2, Save, X } from 'lucide-react';
 import { apiService } from '../services/api';
 import CustomSelect from '../components/CustomSelect';
+import BirthDateSelector from '../components/BirthDateSelector';
 import type { Paciente, CreatePacienteForm, Pais, Ciudad } from '../types';
 
 const PacientesPage: React.FC = () => {
@@ -400,12 +401,11 @@ const PacientesPage: React.FC = () => {
 
                   <div>
                     <label className="form-label text-sm sm:text-base">Fecha de Nacimiento *</label>
-                    <input
-                      type="date"
+                    <BirthDateSelector
                       value={formData.fechaNacimiento}
-                      onChange={(e) => setFormData({ ...formData, fechaNacimiento: e.target.value })}
-                      className="form-input text-sm sm:text-base"
+                      onChange={(date) => setFormData({ ...formData, fechaNacimiento: date })}
                       required
+                      className="mt-1"
                     />
                   </div>
                 </div>
