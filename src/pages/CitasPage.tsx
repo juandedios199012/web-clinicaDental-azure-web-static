@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Calendar, User, Stethoscope } from 'lucide-react';
 import { apiService } from '../services/api';
 import { Cita, Servicio } from '../types';
+import ModalCancelacion from '../components/ModalCancelacion';
 
 const CitasPage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,11 +13,33 @@ const CitasPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
   const [showAllAppointments, setShowAllAppointments] = useState(false);
+  
+  // Estados para el modal de cancelación
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [citaToCancel, setCitaToCancel] = useState<Cita | null>(null);
+  const [motivosCancelacion, setMotivosCancelacion] = useState<string[]>([]);
 
   useEffect(() => {
     loadCitas();
     loadServicios();
+    loadMotivosCancelacion();
   }, [dateFilter, showAllAppointments]);
+
+  const loadMotivosCancelacion = async () => {
+    try {
+      const motivos = await apiService.getMotivosCancelacion();
+      setMotivosCancelacion(motivos);
+    } catch (error) {
+      console.error('Error loading cancellation reasons:', error);
+      // Si falla, usar motivos predeterminados
+      setMotivosCancelacion([
+        'Emergencia médica',
+        'Problemas de transporte',
+        'Conflicto de horario',
+        'Enfermedad del paciente'
+      ]);
+    }
+  };
 
   const loadServicios = async () => {
     try {
@@ -42,6 +65,73 @@ const CitasPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función para atender una cita
+  const handleAtenderCita = async (citaId: string) => {
+    try {
+      setLoading(true);
+      console.log('🩺 Atendiendo cita:', citaId);
+      
+      // Actualizar el estado de la cita a 'completada'
+      await apiService.updateCitaEstado(citaId, 'completada');
+      
+      // Recargar la lista de citas
+      await loadCitas();
+      
+      console.log('✅ Cita atendida exitosamente');
+      
+      // Aquí podrías agregar una notificación de éxito más elegante
+      // Por ahora usamos alert como placeholder
+      alert('¡Cita atendida exitosamente!');
+      
+    } catch (error) {
+      console.error('❌ Error al atender la cita:', error);
+      alert('Error al atender la cita. Por favor intenta nuevamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para iniciar el proceso de cancelación
+  const handleIniciarCancelacion = (cita: Cita) => {
+    setCitaToCancel(cita);
+    setShowCancelModal(true);
+  };
+
+  // Función para confirmar la cancelación con motivo
+  const handleConfirmarCancelacion = async (motivo?: string) => {
+    if (!citaToCancel) return;
+    
+    try {
+      setLoading(true);
+      console.log('❌ Cancelando cita:', citaToCancel.id, 'Motivo:', motivo);
+      
+      // Actualizar el estado de la cita a 'cancelada' con motivo opcional
+      await apiService.updateCitaEstado(citaToCancel.id, 'cancelada', motivo);
+      
+      // Recargar la lista de citas
+      await loadCitas();
+      
+      // Cerrar modal
+      setShowCancelModal(false);
+      setCitaToCancel(null);
+      
+      console.log('✅ Cita cancelada exitosamente');
+      alert('Cita cancelada exitosamente.');
+      
+    } catch (error) {
+      console.error('❌ Error al cancelar la cita:', error);
+      alert('Error al cancelar la cita. Por favor intenta nuevamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para cerrar el modal de cancelación
+  const handleCerrarModalCancelacion = () => {
+    setShowCancelModal(false);
+    setCitaToCancel(null);
   };
 
   // Función helper para obtener el nombre del servicio
@@ -201,12 +291,48 @@ const CitasPage: React.FC = () => {
               </div>
 
               <div className="mt-4 md:mt-0 md:ml-6 flex flex-col space-y-2">
-                <button className="btn-secondary text-sm">
-                  Editar
-                </button>
-                <button className="text-red-600 hover:text-red-800 text-sm">
-                  Cancelar
-                </button>
+                {/* Botón Atender - Solo para citas confirmadas */}
+                {cita.estado === 'confirmada' && (
+                  <button 
+                    onClick={() => handleAtenderCita(cita.id)}
+                    className="btn-primary text-sm flex items-center justify-center"
+                    disabled={loading}
+                  >
+                    <Stethoscope className="h-4 w-4 mr-1" />
+                    Atender
+                  </button>
+                )}
+                
+                {/* Botón Editar - Para citas pendientes y confirmadas */}
+                {(cita.estado === 'pendiente' || cita.estado === 'confirmada') && (
+                  <button className="btn-secondary text-sm">
+                    Editar
+                  </button>
+                )}
+                
+                {/* Botón Cancelar - Para citas pendientes y confirmadas */}
+                {(cita.estado === 'pendiente' || cita.estado === 'confirmada') && (
+                  <button 
+                    onClick={() => handleIniciarCancelacion(cita)}
+                    className="text-red-600 hover:text-red-800 text-sm"
+                    disabled={loading}
+                  >
+                    Cancelar
+                  </button>
+                )}
+                
+                {/* Estados finales - Solo mostrar información */}
+                {cita.estado === 'completada' && (
+                  <span className="text-green-600 text-sm font-medium">
+                    ✅ Atendida
+                  </span>
+                )}
+                
+                {cita.estado === 'cancelada' && (
+                  <span className="text-red-600 text-sm font-medium">
+                    ❌ Cancelada
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -226,6 +352,22 @@ const CitasPage: React.FC = () => {
             }
           </p>
         </div>
+      )}
+
+      {/* Modal de Cancelación */}
+      {citaToCancel && (
+        <ModalCancelacion
+          isOpen={showCancelModal}
+          onClose={handleCerrarModalCancelacion}
+          onConfirm={handleConfirmarCancelacion}
+          citaInfo={{
+            pacienteNombre: citaToCancel.pacienteNombre,
+            fecha: citaToCancel.fecha,
+            hora: citaToCancel.hora
+          }}
+          loading={loading}
+          motivosPredefinidos={motivosCancelacion}
+        />
       )}
     </div>
   );

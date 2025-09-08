@@ -143,6 +143,25 @@ export const citasApi = {
     const response = await apiClient.post('/appointments', cita);
     return response.data;
   },
+
+  // Actualizar estado de una cita
+  updateEstado: async (citaId: string, nuevoEstado: string, motivoCancelacion?: string): Promise<Cita> => {
+    const body: any = { estado: nuevoEstado };
+    
+    // Solo incluir motivo si está definido y no es vacío
+    if (motivoCancelacion && motivoCancelacion.trim() !== '') {
+      body.motivoCancelacion = motivoCancelacion;
+    }
+    
+    const response = await apiClient.put(`/appointments/${citaId}/estado`, body);
+    return response.data;
+  },
+
+  // Obtener motivos de cancelación predefinidos
+  getMotivosCancelacion: async (): Promise<string[]> => {
+    const response = await apiClient.get('/appointments/motivos-cancelacion');
+    return response.data.motivosCancelacion;
+  },
 };
 
 export const pacientesApi = {
@@ -343,6 +362,8 @@ export const apiService = {
   // Citas
   getCitas: citasApi.getAll,
   createCita: citasApi.create,
+  updateCitaEstado: citasApi.updateEstado,
+  getMotivosCancelacion: citasApi.getMotivosCancelacion,
   
   // Pacientes
   getPacientes: pacientesApi.getAll,
