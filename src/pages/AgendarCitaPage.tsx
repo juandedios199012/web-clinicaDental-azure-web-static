@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, User, Stethoscope, Clock, FileText, Activity } from 'lucide-react';
+import { Calendar, User, Stethoscope, Clock, FileText, Activity, Building2 } from 'lucide-react';
 import { apiService } from '../services/api';
-import { Doctor, Servicio } from '../types';
+import { Doctor, Servicio, Sucursal } from '../types';
 import CustomSelect from '../components/CustomSelect';
 
 const AgendarCitaPage: React.FC = () => {
   const [doctores, setDoctores] = useState<Doctor[]>([]);
   const [servicios, setServicios] = useState<Servicio[]>([]);
+  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [horariosDisponibles, setHorariosDisponibles] = useState<string[]>([]);
@@ -15,6 +16,7 @@ const AgendarCitaPage: React.FC = () => {
     pacienteNombre: '',
     doctorId: '',
     servicioId: '',
+    sucursalId: '',
     fecha: '',
     hora: '',
     notas: ''
@@ -43,8 +45,13 @@ const AgendarCitaPage: React.FC = () => {
       const serviciosData = await apiService.getServicios();
       console.log('🦷 Servicios recibidos:', serviciosData.length);
       
+      console.log('📡 Llamando a API sucursales...');
+      const sucursalesData = await apiService.getSucursales();
+      console.log('🏢 Sucursales recibidas:', sucursalesData.length);
+      
       setDoctores(doctoresData);
       setServicios(serviciosData);
+      setSucursales(sucursalesData);
       
       console.log('✅ Datos cargados exitosamente');
     } catch (error) {
@@ -100,6 +107,7 @@ const AgendarCitaPage: React.FC = () => {
         pacienteNombre: formData.pacienteNombre,
         doctorId: formData.doctorId,
         servicioId: formData.servicioId,
+        sucursalId: formData.sucursalId,
         fecha: formData.fecha,
         hora: formData.hora,
         notas: formData.notas || undefined
@@ -110,6 +118,7 @@ const AgendarCitaPage: React.FC = () => {
         pacienteNombre: '',
         doctorId: '',
         servicioId: '',
+        sucursalId: '',
         fecha: '',
         hora: '',
         notas: ''
@@ -225,6 +234,37 @@ const AgendarCitaPage: React.FC = () => {
             />
           </div>
 
+          {/* Selección de Sucursal */}
+          <div className="space-y-2">
+            <label className="form-label flex items-center">
+              <Building2 className="h-4 w-4 mr-2 text-green-600" />
+              Sucursal
+            </label>
+            <CustomSelect
+              options={sucursales.map(sucursal => ({
+                value: sucursal.id,
+                label: `${sucursal.nombre} - ${sucursal.ciudad}`
+              }))}
+              value={formData.sucursalId}
+              onChange={(value) => setFormData({ ...formData, sucursalId: value })}
+              placeholder="Seleccione la sucursal"
+            />
+            
+            {formData.sucursalId && (
+              <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                {(() => {
+                  const sucursalSeleccionada = sucursales.find(s => s.id === formData.sucursalId);
+                  return sucursalSeleccionada ? (
+                    <div className="text-sm text-green-800">
+                      <p><strong>📍 Dirección:</strong> {sucursalSeleccionada.direccion}</p>
+                      <p><strong>🏙️ Ciudad:</strong> {sucursalSeleccionada.ciudad}</p>
+                    </div>
+                  ) : null;
+                })()}
+              </div>
+            )}
+          </div>
+
           {/* Hora */}
           {formData.doctorId && formData.fecha && (
             <div>
@@ -316,6 +356,7 @@ const AgendarCitaPage: React.FC = () => {
                   pacienteNombre: '',
                   doctorId: '',
                   servicioId: '',
+                  sucursalId: '',
                   fecha: '',
                   hora: '',
                   notas: ''

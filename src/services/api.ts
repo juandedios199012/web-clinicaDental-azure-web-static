@@ -232,32 +232,16 @@ export const configuracionApi = {
     }
   },
 
-  // Obtener sucursales - usando endpoint real
+  // Obtener sucursales del endpoint real
   getSucursales: async (): Promise<Sucursal[]> => {
     try {
+      console.log('🏢 Cargando sucursales desde API...');
       const response = await apiClient.get('/config/sucursales');
+      console.log('🏢 Sucursales recibidas:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error al obtener sucursales:', error);
-      // Fallback con sucursales de ejemplo
-      return [
-        {
-          id: '1',
-          nombre: 'Sucursal Principal',
-          direccion: 'Av. Principal 123',
-          ciudad: 'Lima',
-          telefono: '+51 999 999 999',
-          activa: true
-        },
-        {
-          id: '2',
-          nombre: 'Sucursal Norte',
-          direccion: 'Av. Norte 456',
-          ciudad: 'Lima',
-          telefono: '+51 888 888 888',
-          activa: true
-        }
-      ];
+      console.error('❌ Error al obtener sucursales:', error);
+      return [];
     }
   }
 };

@@ -94,10 +94,11 @@ export interface Ciudad {
 export interface Sucursal {
   id: string;
   nombre: string;
-  direccion: string;
   ciudad: string;
-  telefono: string;
-  activa: boolean;
+  direccion: string;
+  // telefono y activa son opcionales para compatibilidad
+  telefono?: string;
+  activa?: boolean;
 }
 
 export interface ApiResponse<T> {
@@ -129,5 +130,6 @@ export interface CreateCitaForm {
   servicioId: string;
   fecha: string;
   hora: string;
+  sucursalId: string; // Campo requerido para la nueva API
   notas?: string;
 }
