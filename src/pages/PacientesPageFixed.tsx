@@ -124,9 +124,35 @@ const PacientesPage: React.FC = () => {
       resetForm();
     } catch (error) {
       console.error('Error saving patient:', error);
-      const errorMessage = editingId 
-        ? 'Error al actualizar el paciente. Por favor, verifique los datos e inténtelo de nuevo.'
-        : 'Error al crear el paciente. Por favor, verifique los datos e inténtelo de nuevo.';
+      
+      // Manejo específico de errores
+      let errorMessage = '';
+      
+      if (error instanceof Error && 'response' in error) {
+        const axiosError = error as any;
+        const status = axiosError.response?.status;
+        
+        switch (status) {
+          case 409:
+            errorMessage = `❌ Error: El correo electrónico "${formData.correoElectronico}" ya está registrado.\n\nPor favor, use un correo electrónico diferente.`;
+            break;
+          case 400:
+            errorMessage = '❌ Error: Los datos ingresados son inválidos. Por favor, verifique la información e inténtelo de nuevo.';
+            break;
+          case 500:
+            errorMessage = '❌ Error del servidor. Por favor, inténtelo de nuevo en unos momentos.';
+            break;
+          default:
+            errorMessage = editingId 
+              ? '❌ Error al actualizar el paciente. Por favor, verifique los datos e inténtelo de nuevo.'
+              : '❌ Error al crear el paciente. Por favor, verifique los datos e inténtelo de nuevo.';
+        }
+      } else {
+        errorMessage = editingId 
+          ? '❌ Error al actualizar el paciente. Por favor, verifique los datos e inténtelo de nuevo.'
+          : '❌ Error al crear el paciente. Por favor, verifique los datos e inténtelo de nuevo.';
+      }
+      
       alert(errorMessage);
     } finally {
       setLoading(false);
@@ -194,7 +220,32 @@ const PacientesPage: React.FC = () => {
       alert('Paciente eliminado exitosamente');
     } catch (error) {
       console.error('Error deleting patient:', error);
-      alert('Error al eliminar el paciente. Por favor, inténtelo de nuevo.');
+      
+      // Manejo específico de errores para eliminación
+      let errorMessage = '';
+      
+      if (error instanceof Error && 'response' in error) {
+        const axiosError = error as any;
+        const status = axiosError.response?.status;
+        
+        switch (status) {
+          case 404:
+            errorMessage = '❌ Error: El paciente no existe o ya fue eliminado.';
+            break;
+          case 400:
+            errorMessage = '❌ Error: No se puede eliminar el paciente porque tiene citas programadas.';
+            break;
+          case 500:
+            errorMessage = '❌ Error del servidor. Por favor, inténtelo de nuevo en unos momentos.';
+            break;
+          default:
+            errorMessage = '❌ Error al eliminar el paciente. Por favor, inténtelo de nuevo.';
+        }
+      } else {
+        errorMessage = '❌ Error al eliminar el paciente. Por favor, inténtelo de nuevo.';
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -324,7 +375,16 @@ const PacientesPage: React.FC = () => {
                       <div className="text-sm text-neutral-500">{paciente.pais}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
-                      {new Date(paciente.fechaNacimiento).toLocaleDateString()}
+                      {(() => {
+                        // Parsear fecha correctamente evitando problemas de zona horaria
+                        const [year, month, day] = paciente.fechaNacimiento.split('-');
+                        const fecha = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                        return fecha.toLocaleDateString('es-ES', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        });
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex space-x-2">
